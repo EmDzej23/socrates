@@ -1,0 +1,172 @@
+import { NextRequest } from "next/server";
+import { openai } from "@ai-sdk/openai";
+import { streamText } from "ai";
+import { z } from "zod";
+import { db } from "@/lib/db";
+import {
+  chatSessions,
+  chatMessages,
+  socraticRules,
+  retrievalLogs,
+} from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { retrieveRelevantChunks } from "@/lib/archive/retrieval";
+import { buildSocraticSystemPrompt } from "@/lib/ai/prompts";
+
+const chatRequestSchema = z.object({
+  sessionId: z.string().uuid().optional(),
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "assistant"]),
+      content: z.string(),
+    })
+  ),
+});
+
+const MAX_CHAT_HISTORY = parseInt(process.env.MAX_CHAT_HISTORY_MESSAGES || "8", 10);
+const MAX_RETRIEVED_CHUNKS = parseInt(process.env.MAX_RETRIEVED_CHUNKS || "10", 10);
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const validated = chatRequestSchema.parse(body);
+
+    const latestUserMessage = validated.messages
+      .filter((m) => m.role === "user")
+      .pop();
+
+    if (!latestUserMessage) {
+      return new Response(
+        JSON.stringify({ error: "No user message provided" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    let sessionId = validated.sessionId;
+
+    if (!sessionId) {
+      const [session] = await db
+        .insert(chatSessions)
+        .values({ title: latestUserMessage.content.slice(0, 100) })
+        .returning();
+      sessionId = session.id;
+    }
+
+    const rules = await db
+      .select()
+      .from(socraticRules)
+      .where(eq(socraticRules.active, true))
+      .orderBy(socraticRules.priority);
+
+    const chunks = await retrieveRelevantChunks({
+      query: latestUserMessage.content,
+      limit: MAX_RETRIEVED_CHUNKS,
+      minReliability: "low",
+    });
+
+    await db.insert(retrievalLogs).values({
+      sessionId,
+      userMessage: latestUserMessage.content,
+      queryEmbeddingModel: process.env.AI_EMBEDDING_MODEL || "text-embedding-3-small",
+      retrievedChunks: chunks.map((c) => ({
+        id: c.id,
+        title: c.title,
+        author: c.author,
+        similarity: c.similarity,
+      })),
+    });
+
+    const systemPrompt = buildSocraticSystemPrompt({
+      rules,
+      chunks,
+    });
+
+    const recentMessages = validated.messages.slice(-MAX_CHAT_HISTORY);
+
+    const model = openai(process.env.AI_CHAT_MODEL || "gpt-4.1-mini");
+
+    const result = streamText({
+      model,
+      system: systemPrompt,
+      messages: recentMessages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    });
+
+    const encoder = new TextEncoder();
+    let fullResponse = "";
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ sessionId })}\n\n`)
+        );
+
+        const reader = result.textStream.getReader();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            fullResponse += value;
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ content: value })}\n\n`)
+            );
+          }
+
+          await db.insert(chatMessages).values({
+            sessionId,
+            role: "user",
+            content: latestUserMessage.content,
+          });
+
+          await db.insert(chatMessages).values({
+            sessionId,
+            role: "assistant",
+            content: fullResponse,
+            retrievedChunkIds: chunks.map((c) => c.id),
+            model: process.env.AI_CHAT_MODEL || "gpt-4.1-mini",
+          });
+
+          await db
+            .update(chatSessions)
+            .set({
+              updatedAt: new Date(),
+              messageCount: validated.messages.length + 1,
+            })
+            .where(eq(chatSessions.id, sessionId));
+
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (error) {
+          console.error("Stream error:", error);
+          controller.error(error);
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  } catch (error) {
+    console.error("Chat error:", error);
+
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: "Validation error", details: error.issues }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(JSON.stringify({ error: "Failed to process chat" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}

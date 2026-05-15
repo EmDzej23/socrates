@@ -1,36 +1,129 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Socrates — A Curated Dialogue Archive
 
-## Getting Started
+A RAG-powered Socratic dialogue system built with Next.js, PostgreSQL/pgvector, and OpenAI.
 
-First, run the development server:
+## Overview
+
+This application provides:
+
+- **Public Agora** (`/agora`) — A chat interface for Socratic dialogue
+- **Private Archive** (`/archive`) — Admin panel for managing the knowledge base
+
+The system uses Retrieval-Augmented Generation (RAG) to answer questions based on curated historical sources, not generic AI knowledge.
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Database**: PostgreSQL with pgvector (Neon recommended)
+- **ORM**: Drizzle
+- **AI**: OpenAI (embeddings + chat)
+- **Styling**: Tailwind CSS v4
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up environment variables
+
+Copy the example file and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+
+- `DATABASE_URL` — PostgreSQL connection string (must support pgvector)
+- `OPENAI_API_KEY` — Your OpenAI API key
+- `ADMIN_PASSWORD` — Password for accessing the admin archive
+- `SESSION_SECRET` — Generate with `openssl rand -base64 32`
+
+### 3. Set up the database
+
+Enable the pgvector extension in your PostgreSQL database:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+Push the schema to your database:
+
+```bash
+npm run db:push
+```
+
+### 4. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Admin Archive
 
-## Learn More
+1. Navigate to `/archive/login`
+2. Enter the admin password (from `ADMIN_PASSWORD`)
+3. Add documents with source metadata
+4. Click "Save & Process" to chunk and embed the text
+5. Configure Socratic rules for dialogue behavior
 
-To learn more about Next.js, take a look at the following resources:
+### Public Chat
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Visit `/agora`
+2. Ask questions
+3. The system retrieves relevant chunks and responds in Socratic style
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+src/
+├── app/
+│   ├── page.tsx              # Landing page
+│   ├── agora/                # Public chat
+│   ├── archive/              # Admin panel
+│   └── api/                  # API routes
+├── components/
+│   ├── chat/                 # Chat UI components
+│   └── archive/              # Admin UI components
+└── lib/
+    ├── ai/                   # AI functions (embeddings, prompts)
+    ├── archive/              # Ingestion and retrieval
+    ├── auth/                 # Admin authentication
+    └── db/                   # Database schema and connection
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run db:generate  # Generate migrations
+npm run db:migrate   # Run migrations
+npm run db:push      # Push schema directly
+npm run db:studio    # Open Drizzle Studio
+```
+
+## Initial Archive Content
+
+Start with these recommended sources:
+
+1. Plato — Apology
+2. Plato — Crito
+3. Plato — Phaedo
+4. Plato — Symposium
+5. Xenophon — Memorabilia
+
+Add each with appropriate metadata (author, source type, reliability level).
+
+## Key Principles
+
+- The **archive** is the memory, not the LLM
+- Use **retrieval** for all factual claims
+- Socrates should **ask questions**, not lecture
+- Never claim to be the historical Socrates
+- Maintain **historical honesty** about limitations
