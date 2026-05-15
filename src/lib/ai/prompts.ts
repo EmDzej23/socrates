@@ -28,7 +28,7 @@ export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
   if (rules.length > 0) {
     const sortedRules = [...rules].sort((a, b) => a.priority - b.priority);
     prompt += "\n\nRules:";
-    for (const rule of sortedRules.slice(0, 5)) {
+    for (const rule of sortedRules) {
       prompt += `\n- ${rule.content}`;
     }
   }

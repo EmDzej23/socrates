@@ -16,6 +16,7 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
     content: "",
     priority: 100,
     active: true,
+    alwaysInclude: true,
   });
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -33,7 +34,7 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
 
       if (!response.ok) throw new Error("Failed to add rule");
 
-      setNewRule({ title: "", content: "", priority: 100, active: true });
+      setNewRule({ title: "", content: "", priority: 100, active: true, alwaysInclude: true });
       setIsAdding(false);
       router.refresh();
     } catch (error) {
@@ -78,24 +79,24 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: 'var(--font-serif)' }}>
       <div className="flex justify-end">
         <button
           onClick={() => setIsAdding(true)}
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+          className="bg-[var(--ink)] px-4 py-2 text-[var(--parchment)] hover:bg-[var(--ink-light)] transition-colors"
         >
           Add Rule
         </button>
       </div>
 
       {isAdding && (
-        <div className="rounded-xl border border-stone-200 bg-white p-6 dark:border-stone-800 dark:bg-stone-900">
-          <h3 className="text-lg font-medium text-stone-800 dark:text-stone-200">
+        <div className="border-2 border-[var(--ink-light)] border-opacity-20 bg-[var(--parchment)] p-6">
+          <h3 className="text-xl font-semibold text-[var(--ink)]">
             New Rule
           </h3>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+              <label className="block text-sm text-[var(--ink-light)] uppercase tracking-wider">
                 Title
               </label>
               <input
@@ -104,12 +105,12 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
                 onChange={(e) =>
                   setNewRule((prev) => ({ ...prev, title: e.target.value }))
                 }
-                className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
+                className="mt-1 block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-2 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
                 placeholder="e.g., No direct identity claim"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+              <label className="block text-sm text-[var(--ink-light)] uppercase tracking-wider">
                 Content
               </label>
               <textarea
@@ -118,14 +119,14 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
                   setNewRule((prev) => ({ ...prev, content: e.target.value }))
                 }
                 rows={3}
-                className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
+                className="mt-1 block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-2 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
                 placeholder="Describe the rule behavior..."
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Priority (lower = higher priority)
+                <label className="block text-sm text-[var(--ink-light)] uppercase tracking-wider">
+                  Priority (lower = higher)
                 </label>
                 <input
                   type="number"
@@ -136,36 +137,48 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
                       priority: parseInt(e.target.value, 10) || 100,
                     }))
                   }
-                  className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
+                  className="mt-1 block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-2 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
                 />
               </div>
-              <div className="flex items-end">
-                <label className="flex items-center gap-2">
+              <div className="flex items-end gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={newRule.active}
                     onChange={(e) =>
                       setNewRule((prev) => ({ ...prev, active: e.target.checked }))
                     }
-                    className="h-4 w-4 rounded border-stone-300"
+                    className="h-4 w-4"
                   />
-                  <span className="text-sm text-stone-700 dark:text-stone-300">
-                    Active
-                  </span>
+                  <span className="text-sm text-[var(--ink)]">Active</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newRule.alwaysInclude}
+                    onChange={(e) =>
+                      setNewRule((prev) => ({ ...prev, alwaysInclude: e.target.checked }))
+                    }
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm text-[var(--ink)]">Always include</span>
                 </label>
               </div>
             </div>
-            <div className="flex gap-2 pt-2">
+            <p className="text-xs text-[var(--ink-light)] italic">
+              "Always include" rules are sent with every prompt. Contextual rules are retrieved based on relevance to the question.
+            </p>
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={handleAddRule}
                 disabled={isSaving}
-                className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+                className="bg-[var(--ink)] px-4 py-2 text-[var(--parchment)] hover:bg-[var(--ink-light)] disabled:opacity-50 transition-colors"
               >
                 {isSaving ? "Saving..." : "Save Rule"}
               </button>
               <button
                 onClick={() => setIsAdding(false)}
-                className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="border-2 border-[var(--ink-light)] border-opacity-30 px-4 py-2 text-[var(--ink)] hover:border-[var(--ink)] transition-colors"
               >
                 Cancel
               </button>
@@ -175,10 +188,9 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
       )}
 
       {rules.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-12 text-center dark:border-stone-700 dark:bg-stone-900">
-          <p className="text-stone-600 dark:text-stone-400">
-            No rules configured yet. Add behavioral rules to guide Socratic
-            dialogue.
+        <div className="border-2 border-dashed border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment-dark)] p-12 text-center">
+          <p className="text-[var(--ink-light)] italic">
+            No rules configured yet. Add behavioral rules to guide Socratic dialogue.
           </p>
         </div>
       ) : (
@@ -186,41 +198,50 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
           {rules.map((rule) => (
             <div
               key={rule.id}
-              className={`rounded-xl border bg-white p-6 dark:bg-stone-900 ${
+              className={`border-2 bg-[var(--parchment)] p-6 ${
                 rule.active
-                  ? "border-stone-200 dark:border-stone-800"
-                  : "border-stone-200 opacity-60 dark:border-stone-800"
+                  ? "border-[var(--ink-light)] border-opacity-20"
+                  : "border-[var(--ink-light)] border-opacity-10 opacity-60"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-stone-800 dark:text-stone-200">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold text-[var(--ink)]">
                       {rule.title}
                     </h3>
-                    <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-400">
+                    <span className="bg-[var(--parchment-dark)] px-2 py-0.5 text-xs text-[var(--ink-light)]">
                       Priority: {rule.priority}
                     </span>
+                    {rule.alwaysInclude ? (
+                      <span className="bg-[var(--olive)] px-2 py-0.5 text-xs text-[var(--parchment)]">
+                        Always
+                      </span>
+                    ) : (
+                      <span className="bg-[var(--gold)] px-2 py-0.5 text-xs text-[var(--parchment)]">
+                        Contextual
+                      </span>
+                    )}
                     {!rule.active && (
-                      <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                      <span className="bg-[var(--terracotta)] px-2 py-0.5 text-xs text-[var(--parchment)]">
                         Inactive
                       </span>
                     )}
                   </div>
-                  <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+                  <p className="mt-2 text-[var(--ink-light)]">
                     {rule.content}
                   </p>
                 </div>
                 <div className="ml-4 flex gap-2">
                   <button
                     onClick={() => handleToggleActive(rule)}
-                    className="rounded px-2 py-1 text-xs text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+                    className="px-2 py-1 text-xs text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
                   >
                     {rule.active ? "Disable" : "Enable"}
                   </button>
                   <button
                     onClick={() => handleDeleteRule(rule.id)}
-                    className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="px-2 py-1 text-xs text-[var(--terracotta)] hover:underline"
                   >
                     Delete
                   </button>

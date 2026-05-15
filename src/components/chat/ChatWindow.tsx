@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 
@@ -10,26 +10,70 @@ type Message = {
   content: string;
 };
 
-const INITIAL_MESSAGE: Message = {
+const WELCOME_MESSAGE: Message = {
   id: "welcome",
   role: "assistant",
   content: "Let us begin with care, friend. What question weighs upon your mind?",
 };
 
+const SESSION_KEY = "socrates_session_id";
+
 export function ChatWindow() {
-  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const loadHistory = useCallback(async (sid: string) => {
+    try {
+      const response = await fetch(`/api/chat/history?sessionId=${sid}&limit=20`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.messages && data.messages.length > 0) {
+          setMessages(data.messages.map((m: { id: string; role: string; content: string }) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })));
+          setHasMore(data.hasMore);
+        } else {
+          setMessages([WELCOME_MESSAGE]);
+        }
+      } else {
+        setMessages([WELCOME_MESSAGE]);
+      }
+    } catch (error) {
+      console.error("Failed to load history:", error);
+      setMessages([WELCOME_MESSAGE]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const storedSessionId = localStorage.getItem(SESSION_KEY);
+    if (storedSessionId) {
+      setSessionId(storedSessionId);
+      loadHistory(storedSessionId);
+    } else {
+      setMessages([WELCOME_MESSAGE]);
+      setIsLoadingHistory(false);
+    }
+  }, [loadHistory]);
+
+  useEffect(() => {
+    if (!isLoadingHistory) {
+      scrollToBottom();
+    }
+  }, [messages, isLoadingHistory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,8 +133,9 @@ export function ChatWindow() {
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.sessionId) {
+              if (parsed.sessionId && !sessionId) {
                 setSessionId(parsed.sessionId);
+                localStorage.setItem(SESSION_KEY, parsed.sessionId);
               }
               if (parsed.content) {
                 setMessages((prev) =>
@@ -123,32 +168,68 @@ export function ChatWindow() {
     }
   };
 
+  const handleNewChat = () => {
+    localStorage.removeItem(SESSION_KEY);
+    setSessionId(null);
+    setMessages([WELCOME_MESSAGE]);
+    setHasMore(false);
+  };
+
   return (
     <div className="flex flex-1 flex-col h-[calc(100vh-2rem)] papyrus-texture">
       <header className="border-b-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
-          <span className="text-2xl text-[var(--ink-light)]">⏣</span>
-          <div>
-            <h1 className="text-2xl font-semibold text-[var(--ink)] tracking-wide" style={{ fontFamily: 'var(--font-serif)' }}>
-              The Agora
-            </h1>
-            <p className="text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-              ἀγορά — a place of assembly and discourse
-            </p>
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-2xl text-[var(--ink-light)]">⏣</span>
+            <div>
+              <h1 className="text-2xl font-semibold text-[var(--ink)] tracking-wide" style={{ fontFamily: 'var(--font-serif)' }}>
+                The Agora
+              </h1>
+              <p className="text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                ἀγορά — a place of assembly and discourse
+              </p>
+            </div>
           </div>
+          {sessionId && (
+            <button
+              onClick={handleNewChat}
+              className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              New dialogue
+            </button>
+          )}
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-8">
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-6 py-8"
+      >
         <div className="mx-auto max-w-2xl space-y-8">
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex items-center gap-3 text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-              <span className="text-lg">⋯</span>
-              <span className="text-base">contemplating...</span>
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-12">
+              <span className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                Recalling our discourse...
+              </span>
             </div>
+          ) : (
+            <>
+              {hasMore && (
+                <div className="text-center text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                  Earlier messages exist...
+                </div>
+              )}
+              {messages.map((message) => (
+                <ChatMessage key={message.id} message={message} />
+              ))}
+              {isLoading && messages[messages.length - 1]?.role === "user" && (
+                <div className="flex items-center gap-3 text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                  <span className="text-lg">⋯</span>
+                  <span className="text-base">contemplating...</span>
+                </div>
+              )}
+            </>
           )}
           <div ref={messagesEndRef} />
         </div>
@@ -160,7 +241,7 @@ export function ChatWindow() {
             input={input}
             setInput={setInput}
             onSubmit={handleSubmit}
-            isLoading={isLoading}
+            isLoading={isLoading || isLoadingHistory}
           />
         </div>
       </div>

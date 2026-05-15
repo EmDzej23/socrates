@@ -11,6 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { retrieveRelevantChunks } from "@/lib/archive/retrieval";
+import { getRelevantRules } from "@/lib/archive/rules-retrieval";
 import { buildSocraticSystemPrompt } from "@/lib/ai/prompts";
 
 const chatRequestSchema = z.object({
@@ -26,6 +27,7 @@ const chatRequestSchema = z.object({
 const MAX_CHAT_HISTORY = parseInt(process.env.MAX_CHAT_HISTORY_MESSAGES || "6", 10);
 const MAX_RETRIEVED_CHUNKS = parseInt(process.env.MAX_RETRIEVED_CHUNKS || "5", 10);
 const MAX_RESPONSE_TOKENS = 1024;
+const MAX_MESSAGE_LENGTH = 10000;
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,11 +55,7 @@ export async function POST(request: NextRequest) {
       sessionId = session.id;
     }
 
-    const rules = await db
-      .select()
-      .from(socraticRules)
-      .where(eq(socraticRules.active, true))
-      .orderBy(socraticRules.priority);
+    const rules = await getRelevantRules(latestUserMessage.content);
 
     const chunks = await retrieveRelevantChunks({
       query: latestUserMessage.content,
@@ -103,6 +101,7 @@ export async function POST(request: NextRequest) {
     console.log(`--- CONFIG ---`);
     console.log(`Model: ${process.env.AI_CHAT_MODEL || "claude-sonnet-4-6"}`);
     console.log(`Max tokens: ${MAX_RESPONSE_TOKENS}`);
+    console.log(`Rules included: ${rules.length}`);
     console.log(`Retrieved chunks: ${chunks.length}`);
     console.log("=".repeat(80) + "\n");
 
@@ -140,13 +139,13 @@ export async function POST(request: NextRequest) {
           await db.insert(chatMessages).values({
             sessionId,
             role: "user",
-            content: latestUserMessage.content,
+            content: latestUserMessage.content.slice(0, MAX_MESSAGE_LENGTH),
           });
 
           await db.insert(chatMessages).values({
             sessionId,
             role: "assistant",
-            content: fullResponse,
+            content: fullResponse.slice(0, MAX_MESSAGE_LENGTH),
             retrievedChunkIds: chunks.map((c) => c.id),
             model: process.env.AI_CHAT_MODEL || "claude-sonnet-4-6",
           });

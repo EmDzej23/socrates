@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { socraticRules } from "@/lib/db/schema";
 import { z } from "zod";
+import { embedRule } from "@/lib/archive/rules-retrieval";
 
 const createRuleSchema = z.object({
   title: z.string().min(1),
   content: z.string().min(1),
   priority: z.number().default(100),
   active: z.boolean().default(true),
+  alwaysInclude: z.boolean().default(true),
 });
 
 export async function GET() {
@@ -32,8 +34,13 @@ export async function POST(request: NextRequest) {
         content: validated.content,
         priority: validated.priority,
         active: validated.active,
+        alwaysInclude: validated.alwaysInclude,
       })
       .returning();
+
+    if (!validated.alwaysInclude) {
+      embedRule(rule.id).catch(console.error);
+    }
 
     return NextResponse.json(rule);
   } catch (error) {

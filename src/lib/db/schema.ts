@@ -133,7 +133,9 @@ export const socraticRules = pgTable("socratic_rules", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   active: boolean("active").notNull().default(true),
+  alwaysInclude: boolean("always_include").notNull().default(true),
   priority: integer("priority").notNull().default(100),
+  embedding: vector("embedding"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
