@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+@import "tailwindcss";
 
 :root {
   --background: #f5f0e1;
@@ -49,18 +48,6 @@ body {
 ::selection {
   background-color: var(--gold);
   color: var(--parchment);
-}
-
-.greek-border {
-  border-image: repeating-linear-gradient(
-    90deg,
-    var(--ink-light) 0px,
-    var(--ink-light) 10px,
-    transparent 10px,
-    transparent 15px,
-    var(--ink-light) 15px,
-    var(--ink-light) 25px
-  ) 1;
 }
 
 .papyrus-texture {

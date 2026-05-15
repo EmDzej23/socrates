@@ -1,31 +1,18 @@
 import type { SocraticRule } from "@/lib/db/schema";
 import type { RetrievedChunk } from "@/lib/archive/retrieval";
 
-const BASE_SYSTEM_PROMPT = `You are not the historical Socrates, and you must never claim to be him.
-You are a Socratic dialogue system based on a curated archive of sources about Socrates.
+const BASE_SYSTEM_PROMPT = `You are a Socratic dialogue system based on curated ancient sources. You are NOT Socrates himself.
 
-Your purpose is to help the user think more clearly through Socratic dialogue.
+Guidelines:
+- Ask questions rather than give direct answers
+- Examine assumptions and reveal contradictions
+- Use only the provided archive context for factual claims
+- If evidence is insufficient, say so
+- Keep responses concise (2-4 paragraphs max)
+- Speak philosophically but clearly
+- Never claim to be the historical Socrates`;
 
-Core behavior:
-- Prefer questions over direct answers when appropriate.
-- Ask for definitions.
-- Examine assumptions.
-- Reveal contradictions gently but firmly.
-- Do not behave like a motivational speaker, therapist, guru, or generic advice bot.
-- Do not invent historical facts.
-- Use only the retrieved archive context for factual claims about Socrates.
-- If the archive does not provide enough support, say that there is not enough reliable basis in the available sources.
-- When discussing modern topics, make it clear that any answer is an interpretation through Socratic method, not a historical statement by Socrates.
-- Keep answers concise unless the user asks for depth.
-- Maintain a calm, precise, reflective tone.
-
-Response style:
-- Speak in a philosophical but clear way.
-- Avoid modern slang.
-- Avoid excessive drama.
-- Avoid pretending to be resurrected or alive.
-- Do not say "as an AI language model".
-- Do not use emojis.`;
+const MAX_CHUNK_LENGTH = 800;
 
 type BuildPromptOptions = {
   rules: SocraticRule[];
@@ -40,30 +27,30 @@ export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
 
   if (rules.length > 0) {
     const sortedRules = [...rules].sort((a, b) => a.priority - b.priority);
-    prompt += "\n\nAdditional behavioral rules:\n";
-    for (const rule of sortedRules) {
-      prompt += `\n- ${rule.title}: ${rule.content}`;
+    prompt += "\n\nRules:";
+    for (const rule of sortedRules.slice(0, 5)) {
+      prompt += `\n- ${rule.content}`;
     }
   }
 
   if (conversationSummary) {
-    prompt += `\n\nConversation context:\n${conversationSummary}`;
+    prompt += `\n\nContext: ${conversationSummary}`;
   }
 
   if (chunks.length > 0) {
-    prompt += "\n\n---\n\nRetrieved archive context:\n";
+    prompt += "\n\n---\nArchive sources:\n";
 
-    for (let i = 0; i < chunks.length; i++) {
+    for (let i = 0; i < Math.min(chunks.length, 5); i++) {
       const chunk = chunks[i];
-      prompt += `\n[Source ${i + 1}]`;
-      if (chunk.title) prompt += `\nTitle: ${chunk.title}`;
-      if (chunk.author) prompt += `\nAuthor: ${chunk.author}`;
-      if (chunk.sourceType) prompt += `\nType: ${chunk.sourceType.replace(/_/g, " ")}`;
-      if (chunk.reliability) prompt += `\nReliability: ${chunk.reliability}`;
-      prompt += `\nContent:\n${chunk.content}\n`;
+      const truncatedContent = chunk.content.length > MAX_CHUNK_LENGTH
+        ? chunk.content.slice(0, MAX_CHUNK_LENGTH) + "..."
+        : chunk.content;
+      
+      const source = [chunk.author, chunk.title].filter(Boolean).join(", ");
+      prompt += `\n[${source || "Source"}]\n${truncatedContent}\n`;
     }
   } else {
-    prompt += `\n\n---\n\nNote: The archive does not currently contain relevant material for this question. If the user asks about Socrates or philosophy, acknowledge that your archive is still being built and respond using only the Socratic method of questioning.`;
+    prompt += "\n\nNote: No relevant sources found. Use Socratic questioning without making factual claims about Socrates.";
   }
 
   return prompt;
@@ -73,6 +60,5 @@ export function formatChunkForCitation(chunk: RetrievedChunk): string {
   const parts: string[] = [];
   if (chunk.author) parts.push(chunk.author);
   if (chunk.title) parts.push(chunk.title);
-  if (chunk.sourceType) parts.push(`(${chunk.sourceType.replace(/_/g, " ")})`);
   return parts.join(", ") || "Unknown source";
 }

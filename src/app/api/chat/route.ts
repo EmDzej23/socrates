@@ -14,7 +14,7 @@ import { retrieveRelevantChunks } from "@/lib/archive/retrieval";
 import { buildSocraticSystemPrompt } from "@/lib/ai/prompts";
 
 const chatRequestSchema = z.object({
-  sessionId: z.string().uuid().optional(),
+  sessionId: z.string().uuid().nullish(),
   messages: z.array(
     z.object({
       role: z.enum(["user", "assistant"]),
@@ -23,8 +23,9 @@ const chatRequestSchema = z.object({
   ),
 });
 
-const MAX_CHAT_HISTORY = parseInt(process.env.MAX_CHAT_HISTORY_MESSAGES || "8", 10);
-const MAX_RETRIEVED_CHUNKS = parseInt(process.env.MAX_RETRIEVED_CHUNKS || "10", 10);
+const MAX_CHAT_HISTORY = parseInt(process.env.MAX_CHAT_HISTORY_MESSAGES || "6", 10);
+const MAX_RETRIEVED_CHUNKS = parseInt(process.env.MAX_RETRIEVED_CHUNKS || "5", 10);
+const MAX_RESPONSE_TOKENS = 1024;
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,9 +82,12 @@ export async function POST(request: NextRequest) {
       chunks,
     });
 
+    console.log(`System prompt length: ${systemPrompt.length} chars, ~${Math.ceil(systemPrompt.length / 4)} tokens`);
+    console.log(`Retrieved ${chunks.length} chunks`);
+
     const recentMessages = validated.messages.slice(-MAX_CHAT_HISTORY);
 
-    const model = anthropic(process.env.AI_CHAT_MODEL || "claude-sonnet-4-20250514");
+    const model = anthropic(process.env.AI_CHAT_MODEL || "claude-sonnet-4-6");
 
     const result = streamText({
       model,
@@ -92,6 +96,7 @@ export async function POST(request: NextRequest) {
         role: m.role,
         content: m.content,
       })),
+      maxTokens: MAX_RESPONSE_TOKENS,
     });
 
     const encoder = new TextEncoder();
@@ -127,7 +132,7 @@ export async function POST(request: NextRequest) {
             role: "assistant",
             content: fullResponse,
             retrievedChunkIds: chunks.map((c) => c.id),
-            model: process.env.AI_CHAT_MODEL || "claude-sonnet-4-20250514",
+            model: process.env.AI_CHAT_MODEL || "claude-sonnet-4-6",
           });
 
           await db
@@ -164,9 +169,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return new Response(JSON.stringify({ error: "Failed to process chat" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorDetails = error instanceof Error && 'cause' in error ? String(error.cause) : undefined;
+    
+    return new Response(
+      JSON.stringify({ 
+        error: "Failed to process chat", 
+        message: errorMessage,
+        details: errorDetails 
+      }), 
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 }

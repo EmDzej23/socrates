@@ -51,9 +51,8 @@ export function ChatWindow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          messages: [...messages.filter((m) => m.id !== "welcome"), userMessage].map(
-            ({ role, content }) => ({ role, content })
-          ),
+          messages: [...messages.filter((m) => m.id !== "welcome" && m.content.trim()), userMessage]
+            .map(({ role, content }) => ({ role, content })),
         }),
       });
 
