@@ -82,21 +82,37 @@ export async function POST(request: NextRequest) {
       chunks,
     });
 
-    console.log(`System prompt length: ${systemPrompt.length} chars, ~${Math.ceil(systemPrompt.length / 4)} tokens`);
-    console.log(`Retrieved ${chunks.length} chunks`);
-
     const recentMessages = validated.messages.slice(-MAX_CHAT_HISTORY);
+
+    const messagesToSend = recentMessages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    console.log("\n" + "=".repeat(80));
+    console.log("ANTHROPIC API REQUEST");
+    console.log("=".repeat(80));
+    console.log("\n--- SYSTEM PROMPT ---");
+    console.log(systemPrompt);
+    console.log("\n--- MESSAGES ---");
+    messagesToSend.forEach((m, i) => {
+      console.log(`[${i + 1}] ${m.role.toUpperCase()}:`);
+      console.log(m.content);
+      console.log("");
+    });
+    console.log(`--- CONFIG ---`);
+    console.log(`Model: ${process.env.AI_CHAT_MODEL || "claude-sonnet-4-6"}`);
+    console.log(`Max tokens: ${MAX_RESPONSE_TOKENS}`);
+    console.log(`Retrieved chunks: ${chunks.length}`);
+    console.log("=".repeat(80) + "\n");
 
     const model = anthropic(process.env.AI_CHAT_MODEL || "claude-sonnet-4-6");
 
     const result = streamText({
       model,
       system: systemPrompt,
-      messages: recentMessages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      })),
-      maxTokens: MAX_RESPONSE_TOKENS,
+      messages: messagesToSend,
+      maxOutputTokens: MAX_RESPONSE_TOKENS,
     });
 
     const encoder = new TextEncoder();
