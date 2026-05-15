@@ -10,13 +10,16 @@ type Message = {
   content: string;
 };
 
-const WELCOME_MESSAGE: Message = {
-  id: "welcome",
-  role: "assistant",
-  content: "Let us begin with care, friend. What question weighs upon your mind?",
+type Character = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  avatarUrl: string | null;
 };
 
-const SESSION_KEY = "socrates_session_id";
+const SESSION_KEY = "chat_session_id";
+const CHARACTER_KEY = "chat_character_id";
 
 export function ChatWindow() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,12 +28,49 @@ export function ChatWindow() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
+  const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const getWelcomeMessage = (characterName: string): Message => ({
+    id: "welcome",
+    role: "assistant",
+    content: `Let us begin with care, friend. I am ${characterName}. What question weighs upon your mind?`,
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const loadCharacters = useCallback(async () => {
+    try {
+      const response = await fetch("/api/characters");
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data);
+        
+        const storedCharacterId = localStorage.getItem(CHARACTER_KEY);
+        if (storedCharacterId) {
+          const found = data.find((c: Character) => c.id === storedCharacterId);
+          if (found) {
+            setSelectedCharacter(found);
+          } else if (data.length > 0) {
+            setSelectedCharacter(data[0]);
+            localStorage.setItem(CHARACTER_KEY, data[0].id);
+          }
+        } else if (data.length > 0) {
+          setSelectedCharacter(data[0]);
+          localStorage.setItem(CHARACTER_KEY, data[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load characters:", error);
+    } finally {
+      setIsLoadingCharacters(false);
+    }
+  }, []);
 
   const loadHistory = useCallback(async (sid: string) => {
     try {
@@ -44,30 +84,38 @@ export function ChatWindow() {
             content: m.content,
           })));
           setHasMore(data.hasMore);
-        } else {
-          setMessages([WELCOME_MESSAGE]);
+        } else if (selectedCharacter) {
+          setMessages([getWelcomeMessage(selectedCharacter.name)]);
         }
-      } else {
-        setMessages([WELCOME_MESSAGE]);
+      } else if (selectedCharacter) {
+        setMessages([getWelcomeMessage(selectedCharacter.name)]);
       }
     } catch (error) {
       console.error("Failed to load history:", error);
-      setMessages([WELCOME_MESSAGE]);
+      if (selectedCharacter) {
+        setMessages([getWelcomeMessage(selectedCharacter.name)]);
+      }
     } finally {
       setIsLoadingHistory(false);
     }
-  }, []);
+  }, [selectedCharacter]);
 
   useEffect(() => {
+    loadCharacters();
+  }, [loadCharacters]);
+
+  useEffect(() => {
+    if (!selectedCharacter) return;
+    
     const storedSessionId = localStorage.getItem(SESSION_KEY);
     if (storedSessionId) {
       setSessionId(storedSessionId);
       loadHistory(storedSessionId);
     } else {
-      setMessages([WELCOME_MESSAGE]);
+      setMessages([getWelcomeMessage(selectedCharacter.name)]);
       setIsLoadingHistory(false);
     }
-  }, [loadHistory]);
+  }, [selectedCharacter, loadHistory]);
 
   useEffect(() => {
     if (!isLoadingHistory) {
@@ -75,9 +123,18 @@ export function ChatWindow() {
     }
   }, [messages, isLoadingHistory]);
 
+  const handleCharacterChange = (character: Character) => {
+    setSelectedCharacter(character);
+    localStorage.setItem(CHARACTER_KEY, character.id);
+    localStorage.removeItem(SESSION_KEY);
+    setSessionId(null);
+    setMessages([getWelcomeMessage(character.name)]);
+    setHasMore(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !selectedCharacter) return;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -95,6 +152,7 @@ export function ChatWindow() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
+          characterId: selectedCharacter.id,
           messages: [...messages.filter((m) => m.id !== "welcome" && m.content.trim()), userMessage]
             .map(({ role, content }) => ({ role, content })),
         }),
@@ -171,9 +229,34 @@ export function ChatWindow() {
   const handleNewChat = () => {
     localStorage.removeItem(SESSION_KEY);
     setSessionId(null);
-    setMessages([WELCOME_MESSAGE]);
+    if (selectedCharacter) {
+      setMessages([getWelcomeMessage(selectedCharacter.name)]);
+    }
     setHasMore(false);
   };
+
+  if (isLoadingCharacters) {
+    return (
+      <div className="flex flex-1 items-center justify-center h-[calc(100vh-2rem)] papyrus-texture">
+        <span className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+          Summoning the philosophers...
+        </span>
+      </div>
+    );
+  }
+
+  if (characters.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center h-[calc(100vh-2rem)] papyrus-texture">
+        <div className="text-center">
+          <span className="text-4xl block mb-4">🏛</span>
+          <p className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+            No philosophers are currently available.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col h-[calc(100vh-2rem)] papyrus-texture">
@@ -190,15 +273,34 @@ export function ChatWindow() {
               </p>
             </div>
           </div>
-          {sessionId && (
-            <button
-              onClick={handleNewChat}
-              className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              New dialogue
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {characters.length > 1 && (
+              <select
+                value={selectedCharacter?.id || ""}
+                onChange={(e) => {
+                  const char = characters.find(c => c.id === e.target.value);
+                  if (char) handleCharacterChange(char);
+                }}
+                className="border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-3 py-1 text-[var(--ink)] text-sm focus:border-[var(--ink)] focus:outline-none"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                {characters.map((char) => (
+                  <option key={char.id} value={char.id}>
+                    {char.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            {sessionId && (
+              <button
+                onClick={handleNewChat}
+                className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                New dialogue
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -221,7 +323,11 @@ export function ChatWindow() {
                 </div>
               )}
               {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+                <ChatMessage 
+                  key={message.id} 
+                  message={message}
+                  characterName={selectedCharacter?.name}
+                />
               ))}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex items-center gap-3 text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>

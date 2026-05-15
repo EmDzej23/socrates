@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Archive — Σωκράτης",
-  description: "Manage the Socratic knowledge archive.",
+  description: "Manage the knowledge archive.",
 };
 
 export default function ArchiveLayout({
@@ -30,11 +30,11 @@ export default function ArchiveLayout({
           <ul className="space-y-1">
             <li>
               <Link
-                href="/archive/documents"
-                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+                href="/archive/characters"
+                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors font-semibold"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
-                Documents
+                Characters
               </Link>
             </li>
             <li>
@@ -43,16 +43,7 @@ export default function ArchiveLayout({
                 className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
-                Chunks
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/archive/rules"
-                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                Socratic Rules
+                All Chunks
               </Link>
             </li>
             <li>

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ingestDocument } from "@/lib/archive/ingest";
 
 const createDocumentSchema = z.object({
+  characterId: z.string().uuid(),
   title: z.string().min(1),
   author: z.string().optional(),
   translator: z.string().optional(),
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
     const [doc] = await db
       .insert(documents)
       .values({
+        characterId: validated.characterId,
         title: validated.title,
         author: validated.author || null,
         translator: validated.translator || null,

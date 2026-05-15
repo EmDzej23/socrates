@@ -1,24 +1,29 @@
 import { db } from "@/lib/db";
-import { socraticRules } from "@/lib/db/schema";
+import { rules } from "@/lib/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { createEmbedding } from "@/lib/ai/embeddings";
-import type { SocraticRule } from "@/lib/db/schema";
+import type { Rule } from "@/lib/db/schema";
 
 const MAX_CONTEXTUAL_RULES = 3;
 
-export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
+export async function getRelevantRules(query: string, characterId: string): Promise<Rule[]> {
   const alwaysIncludeRules = await db
     .select()
-    .from(socraticRules)
-    .where(and(eq(socraticRules.active, true), eq(socraticRules.alwaysInclude, true)))
-    .orderBy(socraticRules.priority);
+    .from(rules)
+    .where(and(
+      eq(rules.characterId, characterId),
+      eq(rules.active, true),
+      eq(rules.alwaysInclude, true)
+    ))
+    .orderBy(rules.priority);
 
   const contextualRulesWithEmbeddings = await db
     .select()
-    .from(socraticRules)
+    .from(rules)
     .where(and(
-      eq(socraticRules.active, true),
-      eq(socraticRules.alwaysInclude, false)
+      eq(rules.characterId, characterId),
+      eq(rules.active, true),
+      eq(rules.alwaysInclude, false)
     ));
 
   if (contextualRulesWithEmbeddings.length === 0) {
@@ -37,6 +42,7 @@ export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
   const relevantRules = await db.execute(sql`
     SELECT
       id,
+      character_id,
       title,
       content,
       active,
@@ -45,8 +51,9 @@ export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
       created_at,
       updated_at,
       1 - (embedding <=> ${embeddingString}::vector) AS similarity
-    FROM socratic_rules
-    WHERE active = true
+    FROM rules
+    WHERE character_id = ${characterId}
+      AND active = true
       AND always_include = false
       AND embedding IS NOT NULL
     ORDER BY embedding <=> ${embeddingString}::vector
@@ -57,6 +64,7 @@ export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
     const r = row as Record<string, unknown>;
     return {
       id: r.id as string,
+      characterId: r.character_id as string,
       title: r.title as string,
       content: r.content as string,
       active: r.active as boolean,
@@ -65,7 +73,7 @@ export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
       embedding: null,
       createdAt: r.created_at as Date,
       updatedAt: r.updated_at as Date,
-    } as SocraticRule;
+    } as Rule;
   });
 
   const allRules = [...alwaysIncludeRules, ...contextualRules];
@@ -77,8 +85,8 @@ export async function getRelevantRules(query: string): Promise<SocraticRule[]> {
 export async function embedRule(ruleId: string): Promise<void> {
   const [rule] = await db
     .select()
-    .from(socraticRules)
-    .where(eq(socraticRules.id, ruleId))
+    .from(rules)
+    .where(eq(rules.id, ruleId))
     .limit(1);
 
   if (!rule) return;
@@ -87,7 +95,7 @@ export async function embedRule(ruleId: string): Promise<void> {
   const embedding = await createEmbedding(textToEmbed);
 
   await db
-    .update(socraticRules)
+    .update(rules)
     .set({ embedding, updatedAt: new Date() })
-    .where(eq(socraticRules.id, ruleId));
+    .where(eq(rules.id, ruleId));
 }

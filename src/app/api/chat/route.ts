@@ -6,16 +6,17 @@ import { db } from "@/lib/db";
 import {
   chatSessions,
   chatMessages,
-  socraticRules,
+  characters,
   retrievalLogs,
 } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { retrieveRelevantChunks } from "@/lib/archive/retrieval";
 import { getRelevantRules } from "@/lib/archive/rules-retrieval";
-import { buildSocraticSystemPrompt } from "@/lib/ai/prompts";
+import { buildCharacterSystemPrompt } from "@/lib/ai/prompts";
 
 const chatRequestSchema = z.object({
   sessionId: z.string().uuid().nullish(),
+  characterId: z.string().uuid(),
   messages: z.array(
     z.object({
       role: z.enum(["user", "assistant"]),
@@ -34,6 +35,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = chatRequestSchema.parse(body);
 
+    const [character] = await db
+      .select()
+      .from(characters)
+      .where(eq(characters.id, validated.characterId))
+      .limit(1);
+
+    if (!character) {
+      return new Response(
+        JSON.stringify({ error: "Character not found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const latestUserMessage = validated.messages
       .filter((m) => m.role === "user")
       .pop();
@@ -50,17 +64,21 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       const [session] = await db
         .insert(chatSessions)
-        .values({ title: latestUserMessage.content.slice(0, 100) })
+        .values({ 
+          title: latestUserMessage.content.slice(0, 100),
+          characterId: character.id,
+        })
         .returning();
       sessionId = session.id;
     }
 
-    const rules = await getRelevantRules(latestUserMessage.content);
+    const rules = await getRelevantRules(latestUserMessage.content, character.id);
 
     const chunks = await retrieveRelevantChunks({
       query: latestUserMessage.content,
       limit: MAX_RETRIEVED_CHUNKS,
       minReliability: "low",
+      characterId: character.id,
     });
 
     await db.insert(retrievalLogs).values({
@@ -75,7 +93,8 @@ export async function POST(request: NextRequest) {
       })),
     });
 
-    const systemPrompt = buildSocraticSystemPrompt({
+    const systemPrompt = buildCharacterSystemPrompt({
+      character,
       rules,
       chunks,
     });
@@ -90,6 +109,7 @@ export async function POST(request: NextRequest) {
     console.log("\n" + "=".repeat(80));
     console.log("ANTHROPIC API REQUEST");
     console.log("=".repeat(80));
+    console.log(`\n--- CHARACTER: ${character.name} ---`);
     console.log("\n--- SYSTEM PROMPT ---");
     console.log(systemPrompt);
     console.log("\n--- MESSAGES ---");

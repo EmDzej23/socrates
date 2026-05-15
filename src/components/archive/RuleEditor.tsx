@@ -6,9 +6,10 @@ import type { SocraticRule } from "@/lib/db/schema";
 
 type RuleEditorProps = {
   rules: SocraticRule[];
+  characterId: string;
 };
 
-export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
+export function RuleEditor({ rules: initialRules, characterId }: RuleEditorProps) {
   const router = useRouter();
   const [rules, setRules] = useState(initialRules);
   const [newRule, setNewRule] = useState({
@@ -29,7 +30,7 @@ export function RuleEditor({ rules: initialRules }: RuleEditorProps) {
       const response = await fetch("/api/archive/rules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newRule),
+        body: JSON.stringify({ ...newRule, characterId }),
       });
 
       if (!response.ok) throw new Error("Failed to add rule");

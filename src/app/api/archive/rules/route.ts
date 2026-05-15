@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { socraticRules } from "@/lib/db/schema";
+import { rules } from "@/lib/db/schema";
 import { z } from "zod";
 import { embedRule } from "@/lib/archive/rules-retrieval";
 
 const createRuleSchema = z.object({
+  characterId: z.string().uuid(),
   title: z.string().min(1),
   content: z.string().min(1),
   priority: z.number().default(100),
@@ -14,8 +15,8 @@ const createRuleSchema = z.object({
 
 export async function GET() {
   try {
-    const rules = await db.select().from(socraticRules).orderBy(socraticRules.priority);
-    return NextResponse.json(rules);
+    const allRules = await db.select().from(rules).orderBy(rules.priority);
+    return NextResponse.json(allRules);
   } catch (error) {
     console.error("Get rules error:", error);
     return NextResponse.json({ error: "Failed to fetch rules" }, { status: 500 });
@@ -28,8 +29,9 @@ export async function POST(request: NextRequest) {
     const validated = createRuleSchema.parse(body);
 
     const [rule] = await db
-      .insert(socraticRules)
+      .insert(rules)
       .values({
+        characterId: validated.characterId,
         title: validated.title,
         content: validated.content,
         priority: validated.priority,

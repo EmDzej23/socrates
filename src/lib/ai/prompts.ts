@@ -1,7 +1,7 @@
-import type { SocraticRule } from "@/lib/db/schema";
+import type { Rule, Character } from "@/lib/db/schema";
 import type { RetrievedChunk } from "@/lib/archive/retrieval";
 
-const BASE_SYSTEM_PROMPT = `You are a Socratic dialogue system based on curated ancient sources. You are NOT Socrates himself.
+const DEFAULT_BASE_PROMPT = `You are a philosophical dialogue system based on curated ancient sources.
 
 Guidelines:
 - Ask questions rather than give direct answers
@@ -9,21 +9,21 @@ Guidelines:
 - Use only the provided archive context for factual claims
 - If evidence is insufficient, say so
 - Keep responses concise (2-4 paragraphs max)
-- Speak philosophically but clearly
-- Never claim to be the historical Socrates`;
+- Speak philosophically but clearly`;
 
 const MAX_CHUNK_LENGTH = 800;
 
-type BuildPromptOptions = {
-  rules: SocraticRule[];
+type BuildCharacterPromptOptions = {
+  character: Character;
+  rules: Rule[];
   chunks: RetrievedChunk[];
   conversationSummary?: string;
 };
 
-export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
-  const { rules, chunks, conversationSummary } = options;
+export function buildCharacterSystemPrompt(options: BuildCharacterPromptOptions): string {
+  const { character, rules, chunks, conversationSummary } = options;
 
-  let prompt = BASE_SYSTEM_PROMPT;
+  let prompt = character.basePrompt || DEFAULT_BASE_PROMPT;
 
   if (rules.length > 0) {
     const sortedRules = [...rules].sort((a, b) => a.priority - b.priority);
@@ -50,10 +50,35 @@ export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
       prompt += `\n[${source || "Source"}]\n${truncatedContent}\n`;
     }
   } else {
-    prompt += "\n\nNote: No relevant sources found. Use Socratic questioning without making factual claims about Socrates.";
+    prompt += `\n\nNote: No relevant sources found. Use philosophical questioning without making factual claims.`;
   }
 
   return prompt;
+}
+
+// Keep legacy function for backward compatibility
+type BuildPromptOptions = {
+  rules: Rule[];
+  chunks: RetrievedChunk[];
+  conversationSummary?: string;
+};
+
+export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
+  return buildCharacterSystemPrompt({
+    character: {
+      id: "",
+      name: "Socrates",
+      slug: "socrates",
+      description: null,
+      avatarUrl: null,
+      basePrompt: DEFAULT_BASE_PROMPT,
+      active: true,
+      sortOrder: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    ...options,
+  });
 }
 
 export function formatChunkForCitation(chunk: RetrievedChunk): string {

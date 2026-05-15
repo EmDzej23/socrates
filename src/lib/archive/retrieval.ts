@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { documentChunks } from "@/lib/db/schema";
+import { documentChunks, documents } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 import { createEmbedding } from "@/lib/ai/embeddings";
 
@@ -22,6 +22,7 @@ export type RetrievalOptions = {
   limit?: number;
   minReliability?: "high" | "medium" | "low" | "experimental";
   sourceTypes?: string[];
+  characterId?: string;
 };
 
 const reliabilityOrder = {
@@ -34,30 +35,55 @@ const reliabilityOrder = {
 export async function retrieveRelevantChunks(
   options: RetrievalOptions
 ): Promise<RetrievedChunk[]> {
-  const { query, limit = 10, minReliability, sourceTypes } = options;
+  const { query, limit = 10, minReliability, sourceTypes, characterId } = options;
 
   const queryEmbedding = await createEmbedding(query);
 
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
-  const result = await db.execute(sql`
-    SELECT
-      id,
-      document_id,
-      chunk_index,
-      content,
-      title,
-      author,
-      source_type,
-      reliability,
-      language,
-      metadata,
-      1 - (embedding <=> ${embeddingString}::vector) AS similarity
-    FROM document_chunks
-    WHERE embedding IS NOT NULL
-    ORDER BY embedding <=> ${embeddingString}::vector
-    LIMIT ${limit * 2}
-  `);
+  let result;
+  
+  if (characterId) {
+    result = await db.execute(sql`
+      SELECT
+        dc.id,
+        dc.document_id,
+        dc.chunk_index,
+        dc.content,
+        dc.title,
+        dc.author,
+        dc.source_type,
+        dc.reliability,
+        dc.language,
+        dc.metadata,
+        1 - (dc.embedding <=> ${embeddingString}::vector) AS similarity
+      FROM document_chunks dc
+      INNER JOIN documents d ON d.id = dc.document_id
+      WHERE dc.embedding IS NOT NULL
+        AND d.character_id = ${characterId}
+      ORDER BY dc.embedding <=> ${embeddingString}::vector
+      LIMIT ${limit * 2}
+    `);
+  } else {
+    result = await db.execute(sql`
+      SELECT
+        id,
+        document_id,
+        chunk_index,
+        content,
+        title,
+        author,
+        source_type,
+        reliability,
+        language,
+        metadata,
+        1 - (embedding <=> ${embeddingString}::vector) AS similarity
+      FROM document_chunks
+      WHERE embedding IS NOT NULL
+      ORDER BY embedding <=> ${embeddingString}::vector
+      LIMIT ${limit * 2}
+    `);
+  }
 
   let chunks = (result.rows as unknown[]).map((row) => {
     const r = row as Record<string, unknown>;

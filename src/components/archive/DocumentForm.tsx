@@ -2,46 +2,34 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { sourceTypes, reliabilityLevels } from "@/lib/db/schema";
+import { sourceTypes, reliabilityLevels, type Document } from "@/lib/db/schema";
 
 type DocumentFormProps = {
-  initialData?: {
-    id?: string;
-    title: string;
-    author: string;
-    translator: string;
-    sourceType: string;
-    reliability: string;
-    language: string;
-    originalLanguage: string;
-    period: string;
-    sourceUrl: string;
-    publicationYear: string;
-    copyrightStatus: string;
-    notes: string;
-    rawContent: string;
-  };
+  document?: Document;
+  characterId: string;
+  characterSlug: string;
 };
 
-export function DocumentForm({ initialData }: DocumentFormProps) {
+export function DocumentForm({ document, characterId, characterSlug }: DocumentFormProps) {
   const router = useRouter();
+  const isEditing = !!document;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    title: initialData?.title || "",
-    author: initialData?.author || "",
-    translator: initialData?.translator || "",
-    sourceType: initialData?.sourceType || "primary_source",
-    reliability: initialData?.reliability || "medium",
-    language: initialData?.language || "en",
-    originalLanguage: initialData?.originalLanguage || "",
-    period: initialData?.period || "",
-    sourceUrl: initialData?.sourceUrl || "",
-    publicationYear: initialData?.publicationYear || "",
-    copyrightStatus: initialData?.copyrightStatus || "",
-    notes: initialData?.notes || "",
-    rawContent: initialData?.rawContent || "",
+    title: document?.title || "",
+    author: document?.author || "",
+    translator: document?.translator || "",
+    sourceType: document?.sourceType || "primary_source",
+    reliability: document?.reliability || "medium",
+    language: document?.language || "en",
+    originalLanguage: document?.originalLanguage || "",
+    period: document?.period || "",
+    sourceUrl: document?.sourceUrl || "",
+    publicationYear: document?.publicationYear || "",
+    copyrightStatus: document?.copyrightStatus || "",
+    notes: document?.notes || "",
+    rawContent: document?.rawContent || "",
   });
 
   const handleChange = (
@@ -57,15 +45,15 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
     setError(null);
 
     try {
-      const url = initialData?.id
-        ? `/api/archive/documents/${initialData.id}`
+      const url = isEditing
+        ? `/api/archive/documents/${document.id}`
         : "/api/archive/documents";
-      const method = initialData?.id ? "PUT" : "POST";
+      const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, processImmediately }),
+        body: JSON.stringify({ ...formData, characterId, processImmediately }),
       });
 
       if (!response.ok) {
@@ -74,7 +62,7 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
       }
 
       const data = await response.json();
-      router.push(`/archive/documents/${data.documentId}`);
+      router.push(`/archive/characters/${characterSlug}/documents/${data.documentId}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -270,7 +258,7 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
           disabled={isSubmitting}
           className="bg-[var(--ink)] px-6 py-3 text-[var(--parchment)] hover:bg-[var(--ink-light)] disabled:opacity-50 transition-colors"
         >
-          {isSubmitting ? "Saving..." : initialData?.id ? "Update Document" : "Save Document"}
+          {isSubmitting ? "Saving..." : isEditing ? "Update Document" : "Save Document"}
         </button>
         <button
           type="button"
@@ -278,7 +266,7 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
           onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
           className="border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-6 py-3 text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-50 transition-colors"
         >
-          {isSubmitting ? "Processing..." : initialData?.id ? "Update & Reprocess" : "Save & Process"}
+          {isSubmitting ? "Processing..." : isEditing ? "Update & Reprocess" : "Save & Process"}
         </button>
       </div>
     </form>

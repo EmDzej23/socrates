@@ -8,6 +8,7 @@ import {
   jsonb,
   index,
   customType,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 const vector = customType<{ data: number[]; dpiverName: "vector" }>({
@@ -53,27 +54,53 @@ export const processingStatuses = [
   "failed",
 ] as const;
 
-export const documents = pgTable("documents", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  author: text("author"),
-  translator: text("translator"),
-  sourceType: text("source_type").notNull().$type<(typeof sourceTypes)[number]>(),
-  reliability: text("reliability").notNull().default("medium").$type<(typeof reliabilityLevels)[number]>(),
-  language: text("language").notNull().default("en"),
-  originalLanguage: text("original_language"),
-  period: text("period"),
-  sourceUrl: text("source_url"),
-  publicationYear: text("publication_year"),
-  copyrightStatus: text("copyright_status"),
-  notes: text("notes"),
-  rawContent: text("raw_content").notNull(),
-  normalizedContent: text("normalized_content"),
-  processingStatus: text("processing_status").notNull().default("pending").$type<(typeof processingStatuses)[number]>(),
-  chunkCount: integer("chunk_count").default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const characters = pgTable(
+  "characters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    description: text("description"),
+    avatarUrl: text("avatar_url"),
+    basePrompt: text("base_prompt"),
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("characters_slug_idx").on(table.slug),
+  ]
+);
+
+export const documents = pgTable(
+  "documents",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    characterId: uuid("character_id").references(() => characters.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    author: text("author"),
+    translator: text("translator"),
+    sourceType: text("source_type").notNull().$type<(typeof sourceTypes)[number]>(),
+    reliability: text("reliability").notNull().default("medium").$type<(typeof reliabilityLevels)[number]>(),
+    language: text("language").notNull().default("en"),
+    originalLanguage: text("original_language"),
+    period: text("period"),
+    sourceUrl: text("source_url"),
+    publicationYear: text("publication_year"),
+    copyrightStatus: text("copyright_status"),
+    notes: text("notes"),
+    rawContent: text("raw_content").notNull(),
+    normalizedContent: text("normalized_content"),
+    processingStatus: text("processing_status").notNull().default("pending").$type<(typeof processingStatuses)[number]>(),
+    chunkCount: integer("chunk_count").default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("documents_character_id_idx").on(table.characterId),
+  ]
+);
 
 export const documentChunks = pgTable(
   "document_chunks",
@@ -99,15 +126,22 @@ export const documentChunks = pgTable(
   ]
 );
 
-export const chatSessions = pgTable("chat_sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  visitorId: text("visitor_id"),
-  title: text("title"),
-  summary: text("summary"),
-  messageCount: integer("message_count").default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const chatSessions = pgTable(
+  "chat_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    characterId: uuid("character_id").references(() => characters.id, { onDelete: "set null" }),
+    visitorId: text("visitor_id"),
+    title: text("title"),
+    summary: text("summary"),
+    messageCount: integer("message_count").default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("chat_sessions_character_id_idx").on(table.characterId),
+  ]
+);
 
 export const chatMessages = pgTable(
   "chat_messages",
@@ -128,17 +162,24 @@ export const chatMessages = pgTable(
   ]
 );
 
-export const socraticRules = pgTable("socratic_rules", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  active: boolean("active").notNull().default(true),
-  alwaysInclude: boolean("always_include").notNull().default(true),
-  priority: integer("priority").notNull().default(100),
-  embedding: vector("embedding"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const rules = pgTable(
+  "rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    characterId: uuid("character_id").references(() => characters.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    active: boolean("active").notNull().default(true),
+    alwaysInclude: boolean("always_include").notNull().default(true),
+    priority: integer("priority").notNull().default(100),
+    embedding: vector("embedding"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("rules_character_id_idx").on(table.characterId),
+  ]
+);
 
 export const retrievalLogs = pgTable("retrieval_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -149,6 +190,11 @@ export const retrievalLogs = pgTable("retrieval_logs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Keep socraticRules as alias for backward compatibility during migration
+export const socraticRules = rules;
+
+export type Character = typeof characters.$inferSelect;
+export type NewCharacter = typeof characters.$inferInsert;
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type DocumentChunk = typeof documentChunks.$inferSelect;
@@ -157,5 +203,8 @@ export type ChatSession = typeof chatSessions.$inferSelect;
 export type NewChatSession = typeof chatSessions.$inferInsert;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type NewChatMessage = typeof chatMessages.$inferInsert;
-export type SocraticRule = typeof socraticRules.$inferSelect;
-export type NewSocraticRule = typeof socraticRules.$inferInsert;
+export type Rule = typeof rules.$inferSelect;
+export type NewRule = typeof rules.$inferInsert;
+// Backward compatibility
+export type SocraticRule = Rule;
+export type NewSocraticRule = NewRule;

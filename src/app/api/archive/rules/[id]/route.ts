@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { socraticRules } from "@/lib/db/schema";
+import { rules } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,22 +11,23 @@ const updateRuleSchema = z.object({
   active: z.boolean().optional(),
 });
 
-export async function PATCH(
-  request: NextRequest,
-  ctx: RouteContext<"/api/archive/rules/[id]">
-) {
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = await ctx.params;
+    const { id } = await context.params;
     const body = await request.json();
     const validated = updateRuleSchema.parse(body);
 
     const [rule] = await db
-      .update(socraticRules)
+      .update(rules)
       .set({
         ...validated,
         updatedAt: new Date(),
       })
-      .where(eq(socraticRules.id, id))
+      .where(eq(rules.id, id))
       .returning();
 
     if (!rule) {
@@ -48,16 +49,13 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  ctx: RouteContext<"/api/archive/rules/[id]">
-) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const { id } = await ctx.params;
+    const { id } = await context.params;
 
     const [deleted] = await db
-      .delete(socraticRules)
-      .where(eq(socraticRules.id, id))
+      .delete(rules)
+      .where(eq(rules.id, id))
       .returning();
 
     if (!deleted) {

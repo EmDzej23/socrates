@@ -6,9 +6,10 @@ type Message = {
 
 type ChatMessageProps = {
   message: Message;
+  characterName?: string;
 };
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, characterName = "Philosopher" }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
@@ -24,7 +25,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <div className="flex items-center gap-2 mb-2 text-[var(--ink-light)]">
             <span className="text-lg">☉</span>
             <span className="text-sm uppercase tracking-widest" style={{ fontFamily: 'var(--font-serif)' }}>
-              Socrates
+              {characterName}
             </span>
           </div>
         )}
