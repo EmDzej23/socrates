@@ -63,6 +63,7 @@ export const characters = pgTable(
     description: text("description"),
     avatarUrl: text("avatar_url"),
     basePrompt: text("base_prompt"),
+    greetingMessage: text("greeting_message"),
     active: boolean("active").notNull().default(true),
     sortOrder: integer("sort_order").default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

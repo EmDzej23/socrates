@@ -16,6 +16,7 @@ type Character = {
   slug: string;
   description: string | null;
   avatarUrl: string | null;
+  greetingMessage: string | null;
 };
 
 const SESSION_KEY = "chat_session_id";
@@ -34,10 +35,10 @@ export function ChatWindow() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const getWelcomeMessage = (characterName: string): Message => ({
+  const getWelcomeMessage = (character: Character): Message => ({
     id: "welcome",
     role: "assistant",
-    content: `Let us begin with care, friend. I am ${characterName}. What question weighs upon your mind?`,
+    content: character.greetingMessage || `Let us begin with care, friend. I am ${character.name}. What question weighs upon your mind?`,
   });
 
   const scrollToBottom = () => {
@@ -85,15 +86,15 @@ export function ChatWindow() {
           })));
           setHasMore(data.hasMore);
         } else if (selectedCharacter) {
-          setMessages([getWelcomeMessage(selectedCharacter.name)]);
+          setMessages([getWelcomeMessage(selectedCharacter)]);
         }
       } else if (selectedCharacter) {
-        setMessages([getWelcomeMessage(selectedCharacter.name)]);
+        setMessages([getWelcomeMessage(selectedCharacter)]);
       }
     } catch (error) {
       console.error("Failed to load history:", error);
       if (selectedCharacter) {
-        setMessages([getWelcomeMessage(selectedCharacter.name)]);
+        setMessages([getWelcomeMessage(selectedCharacter)]);
       }
     } finally {
       setIsLoadingHistory(false);
@@ -112,7 +113,7 @@ export function ChatWindow() {
       setSessionId(storedSessionId);
       loadHistory(storedSessionId);
     } else {
-      setMessages([getWelcomeMessage(selectedCharacter.name)]);
+      setMessages([getWelcomeMessage(selectedCharacter)]);
       setIsLoadingHistory(false);
     }
   }, [selectedCharacter, loadHistory]);
@@ -128,7 +129,7 @@ export function ChatWindow() {
     localStorage.setItem(CHARACTER_KEY, character.id);
     localStorage.removeItem(SESSION_KEY);
     setSessionId(null);
-    setMessages([getWelcomeMessage(character.name)]);
+    setMessages([getWelcomeMessage(character)]);
     setHasMore(false);
   };
 
@@ -230,7 +231,7 @@ export function ChatWindow() {
     localStorage.removeItem(SESSION_KEY);
     setSessionId(null);
     if (selectedCharacter) {
-      setMessages([getWelcomeMessage(selectedCharacter.name)]);
+      setMessages([getWelcomeMessage(selectedCharacter)]);
     }
     setHasMore(false);
   };

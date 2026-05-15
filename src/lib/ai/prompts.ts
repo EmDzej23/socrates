@@ -72,6 +72,7 @@ export function buildSocraticSystemPrompt(options: BuildPromptOptions): string {
       description: null,
       avatarUrl: null,
       basePrompt: DEFAULT_BASE_PROMPT,
+      greetingMessage: null,
       active: true,
       sortOrder: 0,
       createdAt: new Date(),

@@ -12,6 +12,7 @@ export async function GET() {
         slug: characters.slug,
         description: characters.description,
         avatarUrl: characters.avatarUrl,
+        greetingMessage: characters.greetingMessage,
       })
       .from(characters)
       .where(eq(characters.active, true))

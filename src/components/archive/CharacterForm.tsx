@@ -18,6 +18,7 @@ export function CharacterForm({ character }: CharacterFormProps) {
     description: character?.description || "",
     avatarUrl: character?.avatarUrl || "",
     basePrompt: character?.basePrompt || "",
+    greetingMessage: character?.greetingMessage || "",
     active: character?.active ?? true,
     sortOrder: character?.sortOrder ?? 0,
   });
@@ -139,6 +140,22 @@ export function CharacterForm({ character }: CharacterFormProps) {
         />
         <p className="mt-1 text-xs text-[var(--ink-light)]">
           This prompt forms the foundation of the character's identity. Rules and documents are added on top.
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm text-[var(--ink-light)] uppercase tracking-wider">
+          Greeting Message
+        </label>
+        <input
+          type="text"
+          value={formData.greetingMessage}
+          onChange={(e) => setFormData((prev) => ({ ...prev, greetingMessage: e.target.value }))}
+          className="mt-1 block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-2 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
+          placeholder="e.g., Let us begin with care, friend. What question weighs upon your mind?"
+        />
+        <p className="mt-1 text-xs text-[var(--ink-light)]">
+          The first message users see when starting a conversation. Leave empty for default.
         </p>
       </div>
 

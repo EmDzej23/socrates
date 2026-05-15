@@ -10,6 +10,7 @@ const createCharacterSchema = z.object({
   description: z.string().optional(),
   avatarUrl: z.string().url().optional().or(z.literal("")),
   basePrompt: z.string().optional(),
+  greetingMessage: z.string().optional(),
   active: z.boolean().default(true),
   sortOrder: z.number().default(0),
 });
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
         description: validated.description || null,
         avatarUrl: validated.avatarUrl || null,
         basePrompt: validated.basePrompt || null,
+        greetingMessage: validated.greetingMessage || null,
         active: validated.active,
         sortOrder: validated.sortOrder,
       })

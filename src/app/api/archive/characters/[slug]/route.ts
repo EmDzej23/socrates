@@ -10,6 +10,7 @@ const updateCharacterSchema = z.object({
   description: z.string().nullish(),
   avatarUrl: z.string().url().nullish().or(z.literal("")),
   basePrompt: z.string().nullish(),
+  greetingMessage: z.string().nullish(),
   active: z.boolean().optional(),
   sortOrder: z.number().optional(),
 });
