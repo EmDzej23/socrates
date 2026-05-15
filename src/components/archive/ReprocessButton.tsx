@@ -37,16 +37,16 @@ export function ReprocessButton({ documentId }: ReprocessButtonProps) {
   };
 
   return (
-    <div>
+    <div style={{ fontFamily: 'var(--font-serif)' }}>
       <button
         onClick={handleReprocess}
         disabled={isProcessing}
-        className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+        className="bg-[var(--ink)] px-4 py-2 text-[var(--parchment)] hover:bg-[var(--ink-light)] disabled:opacity-50 transition-colors"
       >
         {isProcessing ? "Processing..." : "Reprocess"}
       </button>
       {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="mt-2 text-sm text-[var(--terracotta)]">{error}</p>
       )}
     </div>
   );

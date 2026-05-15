@@ -13,7 +13,7 @@ type Message = {
 const INITIAL_MESSAGE: Message = {
   id: "welcome",
   role: "assistant",
-  content: "Let us begin carefully. What question do you wish to examine?",
+  content: "Let us begin with care, friend. What question weighs upon your mind?",
 };
 
 export function ChatWindow() {
@@ -116,7 +116,7 @@ export function ChatWindow() {
           id: crypto.randomUUID(),
           role: "assistant",
           content:
-            "I am unable to respond at this moment. Please try again.",
+            "Forgive me, I am unable to respond at this moment. Let us try again.",
         },
       ]);
     } finally {
@@ -125,32 +125,37 @@ export function ChatWindow() {
   };
 
   return (
-    <div className="flex flex-1 flex-col h-[calc(100vh-2rem)]">
-      <header className="border-b border-stone-200 dark:border-stone-800 px-6 py-4">
-        <h1 className="text-lg font-medium text-stone-800 dark:text-stone-200">
-          The Agora
-        </h1>
-        <p className="text-sm text-stone-500 dark:text-stone-500">
-          A space for Socratic dialogue
-        </p>
+    <div className="flex flex-1 flex-col h-[calc(100vh-2rem)] papyrus-texture">
+      <header className="border-b-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
+        <div className="max-w-2xl mx-auto flex items-center gap-4">
+          <span className="text-2xl text-[var(--ink-light)]">⏣</span>
+          <div>
+            <h1 className="text-2xl font-semibold text-[var(--ink)] tracking-wide" style={{ fontFamily: 'var(--font-serif)' }}>
+              The Agora
+            </h1>
+            <p className="text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+              ἀγορά — a place of assembly and discourse
+            </p>
+          </div>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex-1 overflow-y-auto px-6 py-8">
+        <div className="mx-auto max-w-2xl space-y-8">
           {messages.map((message) => (
             <ChatMessage key={message.id} message={message} />
           ))}
           {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex items-center gap-2 text-stone-500">
-              <span className="h-2 w-2 rounded-full bg-stone-400 animate-pulse" />
-              <span className="text-sm">Considering...</span>
+            <div className="flex items-center gap-3 text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+              <span className="text-lg">⋯</span>
+              <span className="text-base">contemplating...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      <div className="border-t border-stone-200 dark:border-stone-800 px-6 py-4">
+      <div className="border-t-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
         <div className="mx-auto max-w-2xl">
           <ChatInput
             input={input}

@@ -83,68 +83,63 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
     }
   };
 
+  const inputClass = "mt-1 block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-2 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none";
+  const labelClass = "block text-sm text-[var(--ink-light)] uppercase tracking-wider";
+
   return (
-    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
+    <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6" style={{ fontFamily: 'var(--font-serif)' }}>
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+        <div className="border-l-4 border-[var(--terracotta)] bg-[var(--parchment-dark)] p-4 text-[var(--terracotta)]">
           {error}
         </div>
       )}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Title *
-          </label>
+          <label className={labelClass}>Title *</label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., Apology"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Author
-          </label>
+          <label className={labelClass}>Author</label>
           <input
             type="text"
             name="author"
             value={formData.author}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., Plato"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Translator
-          </label>
+          <label className={labelClass}>Translator</label>
           <input
             type="text"
             name="translator"
             value={formData.translator}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., Benjamin Jowett"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Source Type *
-          </label>
+          <label className={labelClass}>Source Type *</label>
           <select
             name="sourceType"
             value={formData.sourceType}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
           >
             {sourceTypes.map((type) => (
               <option key={type} value={type}>
@@ -155,15 +150,13 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Reliability *
-          </label>
+          <label className={labelClass}>Reliability *</label>
           <select
             name="reliability"
             value={formData.reliability}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
           >
             {reliabilityLevels.map((level) => (
               <option key={level} value={level}>
@@ -174,114 +167,98 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Language
-          </label>
+          <label className={labelClass}>Language</label>
           <input
             type="text"
             name="language"
             value={formData.language}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="en"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Original Language
-          </label>
+          <label className={labelClass}>Original Language</label>
           <input
             type="text"
             name="originalLanguage"
             value={formData.originalLanguage}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., Ancient Greek"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Period
-          </label>
+          <label className={labelClass}>Period</label>
           <input
             type="text"
             name="period"
             value={formData.period}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., 399 BCE"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Publication Year
-          </label>
+          <label className={labelClass}>Publication Year</label>
           <input
             type="text"
             name="publicationYear"
             value={formData.publicationYear}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., 1871"
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Source URL
-          </label>
+          <label className={labelClass}>Source URL</label>
           <input
             type="url"
             name="sourceUrl"
             value={formData.sourceUrl}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="https://..."
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Copyright Status
-          </label>
+          <label className={labelClass}>Copyright Status</label>
           <input
             type="text"
             name="copyrightStatus"
             value={formData.copyrightStatus}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="e.g., Public Domain"
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Notes
-          </label>
+          <label className={labelClass}>Notes</label>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={handleChange}
             rows={3}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={inputClass}
             placeholder="Any relevant notes about this source..."
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Content *
-          </label>
+          <label className={labelClass}>Content *</label>
           <textarea
             name="rawContent"
             value={formData.rawContent}
             onChange={handleChange}
             required
             rows={12}
-            className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 font-mono text-sm text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+            className={`${inputClass} font-mono text-sm`}
             placeholder="Paste the full text content here..."
           />
         </div>
@@ -291,17 +268,17 @@ export function DocumentForm({ initialData }: DocumentFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-stone-900 px-6 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+          className="bg-[var(--ink)] px-6 py-3 text-[var(--parchment)] hover:bg-[var(--ink-light)] disabled:opacity-50 transition-colors"
         >
-          {isSubmitting ? "Saving..." : "Save Document"}
+          {isSubmitting ? "Saving..." : initialData?.id ? "Update Document" : "Save Document"}
         </button>
         <button
           type="button"
           disabled={isSubmitting}
           onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
-          className="rounded-lg border border-stone-300 bg-white px-6 py-2 text-sm font-medium text-stone-700 hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:bg-stone-800"
+          className="border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-6 py-3 text-[var(--ink)] hover:border-[var(--ink)] disabled:opacity-50 transition-colors"
         >
-          {isSubmitting ? "Processing..." : "Save & Process"}
+          {isSubmitting ? "Processing..." : initialData?.id ? "Update & Reprocess" : "Save & Process"}
         </button>
       </div>
     </form>

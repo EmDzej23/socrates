@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Archive — Socrates Admin",
+  title: "Archive — Σωκράτης",
   description: "Manage the Socratic knowledge archive.",
 };
 
@@ -12,19 +12,27 @@ export default function ArchiveLayout({
 }) {
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 border-r border-stone-200 bg-stone-100 dark:border-stone-800 dark:bg-stone-900">
-        <div className="p-6">
-          <Link href="/archive" className="text-lg font-medium text-stone-800 dark:text-stone-200">
-            Archive
+      <aside className="w-64 border-r-2 border-[var(--ink-light)] border-opacity-20 bg-[var(--parchment-dark)]">
+        <div className="p-6 border-b-2 border-[var(--ink-light)] border-opacity-20">
+          <Link href="/archive" className="flex items-center gap-3">
+            <span className="text-xl text-[var(--ink-light)]">📜</span>
+            <div>
+              <span className="text-xl font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                Archive
+              </span>
+              <p className="text-xs text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                τὸ ἀρχεῖον
+              </p>
+            </div>
           </Link>
-          <p className="text-xs text-stone-500 mt-1">Admin Panel</p>
         </div>
-        <nav className="px-4 py-2">
+        <nav className="px-4 py-4">
           <ul className="space-y-1">
             <li>
               <Link
                 href="/archive/documents"
-                className="block rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
                 Documents
               </Link>
@@ -32,7 +40,8 @@ export default function ArchiveLayout({
             <li>
               <Link
                 href="/archive/chunks"
-                className="block rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
                 Chunks
               </Link>
@@ -40,7 +49,8 @@ export default function ArchiveLayout({
             <li>
               <Link
                 href="/archive/rules"
-                className="block rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
                 Socratic Rules
               </Link>
@@ -48,23 +58,25 @@ export default function ArchiveLayout({
             <li>
               <Link
                 href="/archive/settings"
-                className="block rounded-lg px-3 py-2 text-sm text-stone-700 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+                className="block px-4 py-3 text-[var(--ink)] hover:bg-[var(--parchment)] transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
               >
                 Settings
               </Link>
             </li>
           </ul>
         </nav>
-        <div className="absolute bottom-0 left-0 w-64 border-t border-stone-200 p-4 dark:border-stone-800">
+        <div className="absolute bottom-0 left-0 w-64 border-t-2 border-[var(--ink-light)] border-opacity-20 p-4">
           <Link
             href="/"
-            className="text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+            className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] italic"
+            style={{ fontFamily: 'var(--font-serif)' }}
           >
-            ← Back to site
+            ← Return to Agora
           </Link>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto bg-[var(--parchment)] papyrus-texture">{children}</main>
     </div>
   );
 }

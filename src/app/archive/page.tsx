@@ -3,47 +3,53 @@ import Link from "next/link";
 export default function ArchiveDashboard() {
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-medium text-stone-800 dark:text-stone-200">
-        Archive Dashboard
-      </h1>
-      <p className="mt-2 text-stone-600 dark:text-stone-400">
-        Manage your Socratic knowledge base.
+      <div className="flex items-center gap-3 mb-2">
+        <span className="text-2xl">☉</span>
+        <h1 className="text-3xl font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-serif)' }}>
+          Archive Dashboard
+        </h1>
+      </div>
+      <p className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+        Curate and manage the knowledge of the ages.
       </p>
 
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/archive/documents"
-          className="rounded-xl border border-stone-200 bg-white p-6 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
+          className="group border-2 border-[var(--ink-light)] border-opacity-20 bg-[var(--parchment)] p-6 hover:border-[var(--ink)] transition-colors"
         >
-          <h2 className="text-lg font-medium text-stone-800 dark:text-stone-200">
+          <div className="text-2xl mb-3">📜</div>
+          <h2 className="text-xl font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-serif)' }}>
             Documents
           </h2>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-2 text-[var(--ink-light)]" style={{ fontFamily: 'var(--font-serif)' }}>
             Add, edit, and process source documents for the archive.
           </p>
         </Link>
 
         <Link
           href="/archive/chunks"
-          className="rounded-xl border border-stone-200 bg-white p-6 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
+          className="group border-2 border-[var(--ink-light)] border-opacity-20 bg-[var(--parchment)] p-6 hover:border-[var(--ink)] transition-colors"
         >
-          <h2 className="text-lg font-medium text-stone-800 dark:text-stone-200">
+          <div className="text-2xl mb-3">✂</div>
+          <h2 className="text-xl font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-serif)' }}>
             Chunks
           </h2>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            Review processed text chunks and their embeddings.
+          <p className="mt-2 text-[var(--ink-light)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            Review processed text fragments and their embeddings.
           </p>
         </Link>
 
         <Link
           href="/archive/rules"
-          className="rounded-xl border border-stone-200 bg-white p-6 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900 dark:hover:border-stone-700"
+          className="group border-2 border-[var(--ink-light)] border-opacity-20 bg-[var(--parchment)] p-6 hover:border-[var(--ink)] transition-colors"
         >
-          <h2 className="text-lg font-medium text-stone-800 dark:text-stone-200">
+          <div className="text-2xl mb-3">⚖</div>
+          <h2 className="text-xl font-semibold text-[var(--ink)]" style={{ fontFamily: 'var(--font-serif)' }}>
             Socratic Rules
           </h2>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            Configure behavioral rules for Socratic dialogue.
+          <p className="mt-2 text-[var(--ink-light)]" style={{ fontFamily: 'var(--font-serif)' }}>
+            Configure behavioral guidelines for philosophical dialogue.
           </p>
         </Link>
       </div>

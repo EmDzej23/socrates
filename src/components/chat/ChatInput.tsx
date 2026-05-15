@@ -12,19 +12,21 @@ export function ChatInput({
   isLoading,
 }: ChatInputProps) {
   return (
-    <form onSubmit={onSubmit} className="flex gap-3">
+    <form onSubmit={onSubmit} className="flex gap-4">
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Ask a question..."
+        placeholder="Pose your question..."
         disabled={isLoading}
-        className="flex-1 rounded-full border border-stone-300 bg-white px-5 py-3 text-sm text-stone-900 placeholder-stone-500 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder-stone-500 dark:focus:border-stone-500"
+        className="flex-1 border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-5 py-4 text-lg text-[var(--ink)] placeholder-[var(--ink-light)] placeholder-opacity-50 focus:border-[var(--ink)] focus:outline-none disabled:opacity-50"
+        style={{ fontFamily: 'var(--font-serif)' }}
       />
       <button
         type="submit"
         disabled={isLoading || !input.trim()}
-        className="rounded-full bg-stone-900 px-6 py-3 text-sm font-medium text-white hover:bg-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+        className="bg-[var(--ink)] px-8 py-4 text-lg font-medium text-[var(--parchment)] hover:bg-[var(--ink-light)] focus:outline-none disabled:opacity-50 transition-colors"
+        style={{ fontFamily: 'var(--font-serif)' }}
       >
         {isLoading ? "..." : "Ask"}
       </button>

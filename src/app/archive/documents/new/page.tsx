@@ -1,12 +1,20 @@
+import Link from "next/link";
 import { DocumentForm } from "@/components/archive/DocumentForm";
 
 export default function NewDocumentPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-medium text-stone-800 dark:text-stone-200">
+    <div className="p-8" style={{ fontFamily: 'var(--font-serif)' }}>
+      <Link
+        href="/archive/documents"
+        className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] italic"
+      >
+        ← Back to documents
+      </Link>
+      
+      <h1 className="mt-4 text-3xl font-semibold text-[var(--ink)]">
         Add Document
       </h1>
-      <p className="mt-2 text-stone-600 dark:text-stone-400">
+      <p className="mt-2 text-[var(--ink-light)] italic">
         Add a new source document to the archive.
       </p>
 

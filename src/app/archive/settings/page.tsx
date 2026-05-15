@@ -94,7 +94,7 @@ export default async function SettingsPage() {
               <div className="flex justify-between">
                 <dt className="text-stone-600 dark:text-stone-400">Chat Model</dt>
                 <dd className="font-mono text-stone-900 dark:text-stone-100">
-                  {process.env.AI_CHAT_MODEL || "gpt-4.1-mini"}
+                  {process.env.AI_CHAT_MODEL || "claude-sonnet-4-20250514"}
                 </dd>
               </div>
               <div className="flex justify-between">

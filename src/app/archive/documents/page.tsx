@@ -12,19 +12,19 @@ export default async function DocumentsPage() {
     .orderBy(desc(documents.createdAt));
 
   return (
-    <div className="p-8">
+    <div className="p-8" style={{ fontFamily: 'var(--font-serif)' }}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-medium text-stone-800 dark:text-stone-200">
+          <h1 className="text-3xl font-semibold text-[var(--ink)]">
             Documents
           </h1>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+          <p className="mt-1 text-[var(--ink-light)] italic">
             {docs.length} documents in the archive
           </p>
         </div>
         <Link
           href="/archive/documents/new"
-          className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+          className="bg-[var(--ink)] px-5 py-3 text-[var(--parchment)] hover:bg-[var(--ink-light)] transition-colors"
         >
           Add Document
         </Link>
@@ -32,74 +32,74 @@ export default async function DocumentsPage() {
 
       <div className="mt-8">
         {docs.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-12 text-center dark:border-stone-700 dark:bg-stone-900">
-            <p className="text-stone-600 dark:text-stone-400">
+          <div className="border-2 border-dashed border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment-dark)] p-12 text-center">
+            <p className="text-[var(--ink-light)] italic">
               No documents yet. Add your first source document to begin building the archive.
             </p>
             <Link
               href="/archive/documents/new"
-              className="mt-4 inline-block text-sm font-medium text-stone-900 underline dark:text-stone-100"
+              className="mt-4 inline-block text-[var(--ink)] underline"
             >
               Add your first document
             </Link>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-stone-200 dark:border-stone-800">
-            <table className="min-w-full divide-y divide-stone-200 dark:divide-stone-800">
-              <thead className="bg-stone-50 dark:bg-stone-900">
+          <div className="border-2 border-[var(--ink-light)] border-opacity-20">
+            <table className="min-w-full">
+              <thead className="bg-[var(--parchment-dark)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-500">
+                  <th className="px-6 py-4 text-left text-xs text-[var(--ink-light)] uppercase tracking-wider">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-500">
+                  <th className="px-6 py-4 text-left text-xs text-[var(--ink-light)] uppercase tracking-wider">
                     Author
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-500">
+                  <th className="px-6 py-4 text-left text-xs text-[var(--ink-light)] uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-500">
+                  <th className="px-6 py-4 text-left text-xs text-[var(--ink-light)] uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-stone-500">
+                  <th className="px-6 py-4 text-left text-xs text-[var(--ink-light)] uppercase tracking-wider">
                     Chunks
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200 bg-white dark:divide-stone-800 dark:bg-stone-950">
+              <tbody className="divide-y divide-[var(--ink-light)] divide-opacity-10 bg-[var(--parchment)]">
                 {docs.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-stone-50 dark:hover:bg-stone-900">
+                  <tr key={doc.id} className="hover:bg-[var(--parchment-dark)] transition-colors">
                     <td className="px-6 py-4">
                       <Link
                         href={`/archive/documents/${doc.id}`}
-                        className="font-medium text-stone-900 hover:underline dark:text-stone-100"
+                        className="font-medium text-[var(--ink)] hover:underline"
                       >
                         {doc.title}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-sm text-stone-600 dark:text-stone-400">
+                    <td className="px-6 py-4 text-[var(--ink-light)]">
                       {doc.author || "—"}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex rounded-full bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300">
-                        {doc.sourceType.replace("_", " ")}
+                      <span className="bg-[var(--parchment-dark)] px-2 py-1 text-xs text-[var(--ink-light)]">
+                        {doc.sourceType.replace(/_/g, " ")}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                        className={`inline-block px-2 py-1 text-xs ${
                           doc.processingStatus === "processed"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+                            ? "bg-[var(--olive)] text-[var(--parchment)]"
                             : doc.processingStatus === "processing"
-                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+                            ? "bg-[var(--gold)] text-[var(--parchment)]"
                             : doc.processingStatus === "failed"
-                            ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                            : "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300"
+                            ? "bg-[var(--terracotta)] text-[var(--parchment)]"
+                            : "bg-[var(--ink-light)] text-[var(--parchment)]"
                         }`}
                       >
                         {doc.processingStatus}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-stone-600 dark:text-stone-400">
+                    <td className="px-6 py-4 text-[var(--ink-light)]">
                       {doc.chunkCount}
                     </td>
                   </tr>

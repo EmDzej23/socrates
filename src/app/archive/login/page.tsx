@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { verifyAdminSession, createAdminSession } from "@/lib/auth/session";
 
 export const metadata = {
-  title: "Admin Login — Socrates Archive",
+  title: "Enter the Archive — Σωκράτης",
 };
 
 async function loginAction(formData: FormData) {
@@ -31,24 +31,27 @@ export default async function LoginPage({
   const { error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-stone-50 dark:bg-stone-950">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--parchment)] papyrus-texture">
       <div className="w-full max-w-sm">
-        <div className="rounded-xl border border-stone-200 bg-white p-8 dark:border-stone-800 dark:bg-stone-900">
-          <h1 className="text-xl font-medium text-stone-800 dark:text-stone-200">
-            Archive Login
+        <div className="border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] p-8">
+          <div className="text-center mb-6">
+            <span className="text-4xl text-[var(--ink-light)]">🏛</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-[var(--ink)] text-center" style={{ fontFamily: 'var(--font-serif)' }}>
+            Enter the Archive
           </h1>
-          <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
-            Enter the admin password to access the archive.
+          <p className="mt-2 text-center text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+            Speak the word of passage.
           </p>
 
           {error && (
-            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-              Invalid password. Please try again.
+            <div className="mt-6 border-l-4 border-[var(--terracotta)] bg-[var(--parchment-dark)] p-4 text-[var(--terracotta)]" style={{ fontFamily: 'var(--font-serif)' }}>
+              The word is not recognized. Try again.
             </div>
           )}
 
-          <form action={loginAction} className="mt-6">
-            <label className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+          <form action={loginAction} className="mt-8">
+            <label className="block text-sm text-[var(--ink-light)] uppercase tracking-wider mb-2" style={{ fontFamily: 'var(--font-serif)' }}>
               Password
             </label>
             <input
@@ -56,13 +59,15 @@ export default async function LoginPage({
               name="password"
               required
               autoFocus
-              className="mt-1 block w-full rounded-lg border border-stone-300 bg-white px-4 py-2 text-stone-900 focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
+              className="block w-full border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-4 py-3 text-[var(--ink)] focus:border-[var(--ink)] focus:outline-none"
+              style={{ fontFamily: 'var(--font-serif)' }}
             />
             <button
               type="submit"
-              className="mt-4 w-full rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-200"
+              className="mt-6 w-full bg-[var(--ink)] px-4 py-3 text-[var(--parchment)] hover:bg-[var(--ink-light)] transition-colors"
+              style={{ fontFamily: 'var(--font-serif)' }}
             >
-              Login
+              Enter
             </button>
           </form>
         </div>

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     const recentMessages = validated.messages.slice(-MAX_CHAT_HISTORY);
 
-    const model = openai(process.env.AI_CHAT_MODEL || "gpt-4.1-mini");
+    const model = anthropic(process.env.AI_CHAT_MODEL || "claude-sonnet-4-20250514");
 
     const result = streamText({
       model,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
             role: "assistant",
             content: fullResponse,
             retrievedChunkIds: chunks.map((c) => c.id),
-            model: process.env.AI_CHAT_MODEL || "gpt-4.1-mini",
+            model: process.env.AI_CHAT_MODEL || "claude-sonnet-4-20250514",
           });
 
           await db
