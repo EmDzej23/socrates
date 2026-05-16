@@ -7,10 +7,10 @@ export default function Home() {
         <div className="mb-8 text-6xl text-[var(--ink-light)]">☉</div>
         
         <h1 className="text-5xl font-semibold tracking-wide text-[var(--ink)] sm:text-6xl" style={{ fontFamily: 'var(--font-serif)' }}>
-          ΣΩΚΡΑΤΗΣ
+          TARKOS AGORA
         </h1>
         <p className="mt-2 text-xl text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-          Socrates
+          Τάρκος Ἀγορά
         </p>
         
         <div className="mt-8 mx-auto w-32 border-t-2 border-[var(--ink-light)] opacity-30" />
@@ -44,7 +44,7 @@ export default function Home() {
       
       <footer className="absolute bottom-8 text-center text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
         <p>
-          Not the historical Socrates — a dialogue system based on curated sources.
+          A dialogue system based on curated sources.
         </p>
       </footer>
     </main>

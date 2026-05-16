@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Σωκράτης — A Curated Dialogue Archive",
+  title: "Tarkos Agora — A Curated Dialogue Archive",
   description:
-    "A digital agora for questioning, reflection, and dialogue — built from a curated archive of Socratic sources.",
+    "A digital agora for questioning, reflection, and dialogue — built from a curated archive of ancient sources.",
 };
 
 export default function RootLayout({

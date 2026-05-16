@@ -1,8 +1,8 @@
 import { ChatWindow } from "@/components/chat/ChatWindow";
 
 export const metadata = {
-  title: "Agora — Socratic Dialogue",
-  description: "Enter the agora for Socratic dialogue and examination.",
+  title: "Tarkos Agora — Dialogue",
+  description: "Enter the agora for philosophical dialogue and examination.",
 };
 
 export default function AgoraPage() {

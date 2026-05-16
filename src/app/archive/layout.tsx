@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Archive — Σωκράτης",
+  title: "Archive — Tarkos Agora",
   description: "Manage the knowledge archive.",
 };
 
@@ -63,7 +63,7 @@ export default function ArchiveLayout({
             className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] italic"
             style={{ fontFamily: 'var(--font-serif)' }}
           >
-            ← Return to Agora
+            ← Return to Tarkos Agora
           </Link>
         </div>
       </aside>

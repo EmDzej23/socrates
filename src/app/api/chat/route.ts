@@ -13,6 +13,7 @@ import { eq } from "drizzle-orm";
 import { retrieveRelevantChunks } from "@/lib/archive/retrieval";
 import { getRelevantRules } from "@/lib/archive/rules-retrieval";
 import { buildCharacterSystemPrompt } from "@/lib/ai/prompts";
+import { auth } from "@/lib/auth";
 
 const chatRequestSchema = z.object({
   sessionId: z.string().uuid().nullish(),
@@ -32,6 +33,18 @@ const MAX_MESSAGE_LENGTH = 10000;
 
 export async function POST(request: NextRequest) {
   try {
+    // Get authenticated user
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session?.user) {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await request.json();
     const validated = chatRequestSchema.parse(body);
 
@@ -59,17 +72,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let sessionId = validated.sessionId;
+    let chatSessionId = validated.sessionId;
 
-    if (!sessionId) {
-      const [session] = await db
+    if (!chatSessionId) {
+      const [newSession] = await db
         .insert(chatSessions)
         .values({ 
           title: latestUserMessage.content.slice(0, 100),
           characterId: character.id,
+          userId: session.user.id,
         })
         .returning();
-      sessionId = session.id;
+      chatSessionId = newSession.id;
     }
 
     const rules = await getRelevantRules(latestUserMessage.content, character.id);
@@ -82,7 +96,7 @@ export async function POST(request: NextRequest) {
     });
 
     await db.insert(retrievalLogs).values({
-      sessionId,
+      sessionId: chatSessionId,
       userMessage: latestUserMessage.content,
       queryEmbeddingModel: process.env.AI_EMBEDDING_MODEL || "text-embedding-3-small",
       retrievedChunks: chunks.map((c) => ({
@@ -140,7 +154,7 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ sessionId })}\n\n`)
+          encoder.encode(`data: ${JSON.stringify({ sessionId: chatSessionId })}\n\n`)
         );
 
         const reader = result.textStream.getReader();
@@ -157,13 +171,13 @@ export async function POST(request: NextRequest) {
           }
 
           await db.insert(chatMessages).values({
-            sessionId,
+            sessionId: chatSessionId,
             role: "user",
             content: latestUserMessage.content.slice(0, MAX_MESSAGE_LENGTH),
           });
 
           await db.insert(chatMessages).values({
-            sessionId,
+            sessionId: chatSessionId,
             role: "assistant",
             content: fullResponse.slice(0, MAX_MESSAGE_LENGTH),
             retrievedChunkIds: chunks.map((c) => c.id),
@@ -176,7 +190,7 @@ export async function POST(request: NextRequest) {
               updatedAt: new Date(),
               messageCount: validated.messages.length + 1,
             })
-            .where(eq(chatSessions.id, sessionId));
+            .where(eq(chatSessions.id, chatSessionId));
 
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();

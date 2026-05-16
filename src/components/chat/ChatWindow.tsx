@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
+import { AuthModal } from "@/components/auth/AuthModal";
+import { useSession, signOut } from "@/lib/auth-client";
 
 type Message = {
   id: string;
@@ -23,15 +25,17 @@ const SESSION_KEY = "chat_session_id";
 const CHARACTER_KEY = "chat_character_id";
 
 export function ChatWindow() {
+  const { data: session, isPending: isSessionLoading } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
@@ -117,22 +121,39 @@ export function ChatWindow() {
     }
   }, [selectedCharacter]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    localStorage.removeItem(SESSION_KEY);
+    setChatSessionId(null);
+    if (selectedCharacter) {
+      setMessages([getWelcomeMessage(selectedCharacter)]);
+    }
+  };
+
   useEffect(() => {
     loadCharacters();
   }, [loadCharacters]);
 
   useEffect(() => {
-    if (!selectedCharacter) return;
+    if (!selectedCharacter || isSessionLoading) return;
     
+    // If not logged in, show auth modal and welcome message
+    if (!session?.user) {
+      setMessages([getWelcomeMessage(selectedCharacter)]);
+      setIsLoadingHistory(false);
+      return;
+    }
+    
+    // User is logged in - try to restore last session
     const storedSessionId = localStorage.getItem(SESSION_KEY);
     if (storedSessionId) {
-      setSessionId(storedSessionId);
+      setChatSessionId(storedSessionId);
       loadHistory(storedSessionId);
     } else {
       setMessages([getWelcomeMessage(selectedCharacter)]);
       setIsLoadingHistory(false);
     }
-  }, [selectedCharacter, loadHistory]);
+  }, [selectedCharacter, loadHistory, session?.user, isSessionLoading]);
 
   useEffect(() => {
     if (!isLoadingHistory) {
@@ -146,7 +167,7 @@ export function ChatWindow() {
     setSelectedCharacter(character);
     localStorage.setItem(CHARACTER_KEY, character.id);
     localStorage.removeItem(SESSION_KEY);
-    setSessionId(null);
+    setChatSessionId(null);
     setMessages([getWelcomeMessage(character)]);
     setHasMore(false);
     shouldAutoScrollRef.current = true;
@@ -155,6 +176,12 @@ export function ChatWindow() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading || !selectedCharacter) return;
+
+    // Require authentication to chat
+    if (!session?.user) {
+      setShowAuthModal(true);
+      return;
+    }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -172,7 +199,7 @@ export function ChatWindow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId,
+          sessionId: chatSessionId,
           characterId: selectedCharacter.id,
           messages: [...messages.filter((m) => m.id !== "welcome" && m.content.trim()), userMessage]
             .map(({ role, content }) => ({ role, content })),
@@ -212,8 +239,8 @@ export function ChatWindow() {
 
             try {
               const parsed = JSON.parse(data);
-              if (parsed.sessionId && !sessionId) {
-                setSessionId(parsed.sessionId);
+              if (parsed.sessionId && !chatSessionId) {
+                setChatSessionId(parsed.sessionId);
                 localStorage.setItem(SESSION_KEY, parsed.sessionId);
               }
               if (parsed.content) {
@@ -249,14 +276,14 @@ export function ChatWindow() {
 
   const handleNewChat = () => {
     localStorage.removeItem(SESSION_KEY);
-    setSessionId(null);
+    setChatSessionId(null);
     if (selectedCharacter) {
       setMessages([getWelcomeMessage(selectedCharacter)]);
     }
     setHasMore(false);
   };
 
-  if (isLoadingCharacters) {
+  if (isLoadingCharacters || isSessionLoading) {
     return (
       <div className="flex flex-1 items-center justify-center h-[calc(100vh-2rem)] papyrus-texture">
         <span className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -287,10 +314,10 @@ export function ChatWindow() {
             <span className="text-2xl text-[var(--ink-light)]">⏣</span>
             <div>
               <h1 className="text-2xl font-semibold text-[var(--ink)] tracking-wide" style={{ fontFamily: 'var(--font-serif)' }}>
-                The Agora
+                Tarkos Agora
               </h1>
               <p className="text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-                ἀγορά — a place of assembly and discourse
+                a place of assembly and discourse
               </p>
             </div>
           </div>
@@ -312,13 +339,35 @@ export function ChatWindow() {
                 ))}
               </select>
             )}
-            {sessionId && (
+            {chatSessionId && (
               <button
                 onClick={handleNewChat}
                 className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
                 New dialogue
+              </button>
+            )}
+            {session?.user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-[var(--ink-light)]" style={{ fontFamily: 'var(--font-serif)' }}>
+                  {session.user.name || session.user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="text-sm text-[var(--terracotta)] hover:text-[var(--terracotta)]/80 transition-colors"
+                  style={{ fontFamily: 'var(--font-serif)' }}
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="text-sm text-[var(--olive)] hover:text-[var(--olive)]/80 transition-colors"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Sign in
               </button>
             )}
           </div>
@@ -366,6 +415,11 @@ export function ChatWindow() {
 
       <div className="border-t-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
         <div className="mx-auto max-w-2xl">
+          {!session?.user && (
+            <p className="text-center text-sm text-[var(--ink-light)] mb-3 italic" style={{ fontFamily: 'var(--font-serif)' }}>
+              Sign in to begin your philosophical dialogue
+            </p>
+          )}
           <ChatInput
             input={input}
             setInput={setInput}
@@ -374,6 +428,12 @@ export function ChatWindow() {
           />
         </div>
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => setShowAuthModal(false)}
+      />
     </div>
   );
 }
