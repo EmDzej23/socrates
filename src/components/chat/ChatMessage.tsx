@@ -15,23 +15,23 @@ export function ChatMessage({ message, characterName = "Philosopher" }: ChatMess
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] ${
+        className={`max-w-[90%] sm:max-w-[85%] ${
           isUser
-            ? "bg-[var(--ink)] text-[var(--parchment)] px-6 py-4"
+            ? "bg-[var(--ink)] text-[var(--parchment)] px-4 py-3 sm:px-6 sm:py-4"
             : "bg-transparent"
         }`}
       >
         {!isUser && (
           <div className="flex items-center gap-2 mb-2 text-[var(--ink-light)]">
-            <span className="text-lg">☉</span>
-            <span className="text-sm uppercase tracking-widest" style={{ fontFamily: 'var(--font-serif)' }}>
+            <span className="text-base sm:text-lg">☉</span>
+            <span className="text-xs sm:text-sm uppercase tracking-widest" style={{ fontFamily: 'var(--font-serif)' }}>
               {characterName}
             </span>
           </div>
         )}
         <p 
-          className={`text-lg leading-relaxed whitespace-pre-wrap ${
-            isUser ? "" : "text-[var(--ink)] pl-6 border-l-2 border-[var(--ink-light)] border-opacity-30"
+          className={`text-base sm:text-lg leading-relaxed whitespace-pre-wrap ${
+            isUser ? "" : "text-[var(--ink)] pl-4 sm:pl-6 border-l-2 border-[var(--ink-light)] border-opacity-30"
           }`}
           style={{ fontFamily: 'var(--font-serif)' }}
         >

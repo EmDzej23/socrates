@@ -307,70 +307,78 @@ export function ChatWindow() {
   }
 
   return (
-    <div className="flex flex-1 flex-col h-[calc(100vh-2rem)] papyrus-texture">
-      <header className="border-b-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-2xl text-[var(--ink-light)]">⏣</span>
-            <div>
-              <h1 className="text-2xl font-semibold text-[var(--ink)] tracking-wide" style={{ fontFamily: 'var(--font-serif)' }}>
-                Tarkos Agora
-              </h1>
-              <p className="text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-                a place of assembly and discourse
-              </p>
+    <div className="flex flex-1 flex-col h-[calc(100vh-2rem)] papyrus-texture overflow-hidden">
+      <header className="border-b-2 border-[var(--ink-light)] border-opacity-20 px-4 py-3 sm:px-6 sm:py-5">
+        <div className="max-w-2xl mx-auto">
+          {/* Top row: Logo and auth */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+              <span className="text-xl sm:text-2xl text-[var(--ink-light)] shrink-0">⏣</span>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-semibold text-[var(--ink)] tracking-wide truncate" style={{ fontFamily: 'var(--font-serif)' }}>
+                  Tarkos Agora
+                </h1>
+                <p className="hidden sm:block text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
+                  a place of assembly and discourse
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {characters.length > 1 && (
-              <select
-                value={selectedCharacter?.id || ""}
-                onChange={(e) => {
-                  const char = characters.find(c => c.id === e.target.value);
-                  if (char) handleCharacterChange(char);
-                }}
-                className="border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-3 py-1 text-[var(--ink)] text-sm focus:border-[var(--ink)] focus:outline-none"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                {characters.map((char) => (
-                  <option key={char.id} value={char.id}>
-                    {char.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            {chatSessionId && (
-              <button
-                onClick={handleNewChat}
-                className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                New dialogue
-              </button>
-            )}
-            {session?.user ? (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-[var(--ink-light)]" style={{ fontFamily: 'var(--font-serif)' }}>
-                  {session.user.name || session.user.email}
-                </span>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {session?.user ? (
+                <>
+                  <span className="hidden sm:inline text-sm text-[var(--ink-light)] max-w-[120px] truncate" style={{ fontFamily: 'var(--font-serif)' }}>
+                    {session.user.name || session.user.email}
+                  </span>
+                  <button
+                    onClick={handleSignOut}
+                    className="text-sm text-[var(--terracotta)] hover:text-[var(--terracotta)]/80 transition-colors whitespace-nowrap"
+                    style={{ fontFamily: 'var(--font-serif)' }}
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
                 <button
-                  onClick={handleSignOut}
-                  className="text-sm text-[var(--terracotta)] hover:text-[var(--terracotta)]/80 transition-colors"
+                  onClick={() => setShowAuthModal(true)}
+                  className="text-sm text-[var(--olive)] hover:text-[var(--olive)]/80 transition-colors whitespace-nowrap"
                   style={{ fontFamily: 'var(--font-serif)' }}
                 >
-                  Sign out
+                  Sign in
                 </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowAuthModal(true)}
-                className="text-sm text-[var(--olive)] hover:text-[var(--olive)]/80 transition-colors"
-                style={{ fontFamily: 'var(--font-serif)' }}
-              >
-                Sign in
-              </button>
-            )}
+              )}
+            </div>
           </div>
+          {/* Bottom row: Character select and new chat */}
+          {(characters.length > 1 || chatSessionId) && (
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-[var(--ink-light)]/10">
+              {characters.length > 1 && (
+                <select
+                  value={selectedCharacter?.id || ""}
+                  onChange={(e) => {
+                    const char = characters.find(c => c.id === e.target.value);
+                    if (char) handleCharacterChange(char);
+                  }}
+                  className="flex-1 sm:flex-none border-2 border-[var(--ink-light)] border-opacity-30 bg-[var(--parchment)] px-2 sm:px-3 py-1 text-[var(--ink)] text-sm focus:border-[var(--ink)] focus:outline-none"
+                  style={{ fontFamily: 'var(--font-serif)' }}
+                >
+                  {characters.map((char) => (
+                    <option key={char.id} value={char.id}>
+                      {char.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {chatSessionId && (
+                <button
+                  onClick={handleNewChat}
+                  className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors whitespace-nowrap"
+                  style={{ fontFamily: 'var(--font-serif)' }}
+                >
+                  New dialogue
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -378,9 +386,9 @@ export function ChatWindow() {
         ref={messagesContainerRef}
         onWheel={handleUserScroll}
         onTouchMove={handleUserScroll}
-        className="flex-1 overflow-y-auto px-6 py-8"
+        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8"
       >
-        <div className="mx-auto max-w-2xl space-y-8">
+        <div className="mx-auto max-w-2xl space-y-6 sm:space-y-8">
           {isLoadingHistory ? (
             <div className="flex items-center justify-center py-12">
               <span className="text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
@@ -413,7 +421,7 @@ export function ChatWindow() {
         </div>
       </div>
 
-      <div className="border-t-2 border-[var(--ink-light)] border-opacity-20 px-6 py-5">
+      <div className="border-t-2 border-[var(--ink-light)] border-opacity-20 px-4 py-3 sm:px-6 sm:py-5">
         <div className="mx-auto max-w-2xl">
           {!session?.user && (
             <p className="text-center text-sm text-[var(--ink-light)] mb-3 italic" style={{ fontFamily: 'var(--font-serif)' }}>
