@@ -30,8 +30,10 @@ export function ChatWindow() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [oldestTimestamp, setOldestTimestamp] = useState<string | null>(null);
   const [characters, setCharacters] = useState<Character[]>([]);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
@@ -105,6 +107,7 @@ export function ChatWindow() {
             content: m.content,
           })));
           setHasMore(data.hasMore);
+          setOldestTimestamp(data.oldestTimestamp);
         } else if (selectedCharacter) {
           setMessages([getWelcomeMessage(selectedCharacter)]);
         }
@@ -120,6 +123,45 @@ export function ChatWindow() {
       setIsLoadingHistory(false);
     }
   }, [selectedCharacter]);
+
+  const loadMoreHistory = useCallback(async () => {
+    if (!chatSessionId || !oldestTimestamp || isLoadingMore) return;
+    
+    setIsLoadingMore(true);
+    const container = messagesContainerRef.current;
+    const scrollHeightBefore = container?.scrollHeight || 0;
+    
+    try {
+      const response = await fetch(
+        `/api/chat/history?sessionId=${chatSessionId}&limit=20&before=${encodeURIComponent(oldestTimestamp)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.messages && data.messages.length > 0) {
+          const olderMessages = data.messages.map((m: { id: string; role: string; content: string }) => ({
+            id: m.id,
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          }));
+          setMessages((prev) => [...olderMessages, ...prev]);
+          setHasMore(data.hasMore);
+          setOldestTimestamp(data.oldestTimestamp);
+          
+          // Maintain scroll position after prepending messages
+          requestAnimationFrame(() => {
+            if (container) {
+              const scrollHeightAfter = container.scrollHeight;
+              container.scrollTop = scrollHeightAfter - scrollHeightBefore;
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load more history:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [chatSessionId, oldestTimestamp, isLoadingMore]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -170,6 +212,7 @@ export function ChatWindow() {
     setChatSessionId(null);
     setMessages([getWelcomeMessage(character)]);
     setHasMore(false);
+    setOldestTimestamp(null);
     shouldAutoScrollRef.current = true;
   };
 
@@ -281,6 +324,7 @@ export function ChatWindow() {
       setMessages([getWelcomeMessage(selectedCharacter)]);
     }
     setHasMore(false);
+    setOldestTimestamp(null);
   };
 
   if (isLoadingCharacters || isSessionLoading) {
@@ -398,8 +442,15 @@ export function ChatWindow() {
           ) : (
             <>
               {hasMore && (
-                <div className="text-center text-sm text-[var(--ink-light)] italic" style={{ fontFamily: 'var(--font-serif)' }}>
-                  Earlier messages exist...
+                <div className="text-center">
+                  <button
+                    onClick={loadMoreHistory}
+                    disabled={isLoadingMore}
+                    className="text-sm text-[var(--ink-light)] hover:text-[var(--ink)] italic transition-colors disabled:opacity-50"
+                    style={{ fontFamily: 'var(--font-serif)' }}
+                  >
+                    {isLoadingMore ? "Loading..." : "Load earlier messages..."}
+                  </button>
                 </div>
               )}
               {messages.map((message) => (
