@@ -34,6 +34,17 @@ export function ChatWindow() {
   const [isLoadingCharacters, setIsLoadingCharacters] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
+
+  const handleUserScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const threshold = 100;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom > threshold) {
+      shouldAutoScrollRef.current = false;
+    }
+  }, []);
 
   const getWelcomeMessage = (character: Character): Message => ({
     id: "welcome",
@@ -41,9 +52,14 @@ export function ChatWindow() {
     content: character.greetingMessage || `Let us begin with care, friend. I am ${character.name}. What question weighs upon your mind?`,
   });
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback((force = false) => {
+    if (force || shouldAutoScrollRef.current) {
+      const container = messagesContainerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  }, []);
 
   const loadCharacters = useCallback(async () => {
     try {
@@ -120,9 +136,11 @@ export function ChatWindow() {
 
   useEffect(() => {
     if (!isLoadingHistory) {
-      scrollToBottom();
+      requestAnimationFrame(() => {
+        scrollToBottom();
+      });
     }
-  }, [messages, isLoadingHistory]);
+  }, [messages, isLoadingHistory, scrollToBottom]);
 
   const handleCharacterChange = (character: Character) => {
     setSelectedCharacter(character);
@@ -131,6 +149,7 @@ export function ChatWindow() {
     setSessionId(null);
     setMessages([getWelcomeMessage(character)]);
     setHasMore(false);
+    shouldAutoScrollRef.current = true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,6 +165,7 @@ export function ChatWindow() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    shouldAutoScrollRef.current = true;
 
     try {
       const response = await fetch("/api/chat", {
@@ -307,6 +327,8 @@ export function ChatWindow() {
 
       <div 
         ref={messagesContainerRef}
+        onWheel={handleUserScroll}
+        onTouchMove={handleUserScroll}
         className="flex-1 overflow-y-auto px-6 py-8"
       >
         <div className="mx-auto max-w-2xl space-y-8">
