@@ -179,7 +179,7 @@ export function ChatWindow() {
   useEffect(() => {
     if (!selectedCharacter || isSessionLoading) return;
     
-    // If not logged in, show auth modal and welcome message
+    // If not logged in, show welcome message
     if (!session?.user) {
       setMessages([getWelcomeMessage(selectedCharacter)]);
       setIsLoadingHistory(false);
@@ -192,8 +192,31 @@ export function ChatWindow() {
       setChatSessionId(storedSessionId);
       loadHistory(storedSessionId);
     } else {
-      setMessages([getWelcomeMessage(selectedCharacter)]);
-      setIsLoadingHistory(false);
+      // No localStorage session - fetch most recent session for this character from server
+      const fetchLatestSession = async () => {
+        try {
+          const response = await fetch(`/api/chat/sessions?limit=10`);
+          if (response.ok) {
+            const data = await response.json();
+            // Find most recent session for the selected character
+            const latestSession = data.sessions?.find(
+              (s: { character?: { id: string } }) => s.character?.id === selectedCharacter.id
+            );
+            if (latestSession) {
+              setChatSessionId(latestSession.id);
+              localStorage.setItem(SESSION_KEY, latestSession.id);
+              loadHistory(latestSession.id);
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch latest session:", error);
+        }
+        // No existing session found - show welcome message
+        setMessages([getWelcomeMessage(selectedCharacter)]);
+        setIsLoadingHistory(false);
+      };
+      fetchLatestSession();
     }
   }, [selectedCharacter, loadHistory, session?.user, isSessionLoading]);
 
